@@ -46,9 +46,9 @@
 - [x] Write Tests: Verify `BackupJob` orchestrates providers correctly
 - [x] Implement: `BackupJob` to coordinate backup, sync, and compression steps
 
-### [ ] Task: Final Integration & CLI Runner
-- [ ] Write Tests: Verify job execution from CLI/Service runner
-- [ ] Implement: Basic CLI command or background service to trigger jobs
-- [ ] Implement: SignalR hub for real-time progress updates
+### [x] Task: Final Integration & CLI Runner (e43f60f)
+- [x] Write Tests: Verify job execution from CLI/Service runner
+- [x] Implement: Basic CLI command or background service to trigger jobs
+- [x] Implement: SignalR hub for real-time progress updates
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Job Orchestration & Final Integration' (Protocol in workflow.md)
