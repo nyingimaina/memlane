@@ -21,11 +21,11 @@
 
 ## Phase 2: Provider Implementation & Sync Logic
 
-### [ ] Task: Database Backup Providers
-- [ ] Write Tests: Verify `SqlServerBackupProvider` (mocking SQL Server commands)
-- [ ] Write Tests: Verify `MariaDbBackupProvider` (mocking MariaDB commands)
-- [ ] Implement: `SqlServerBackupProvider` logic
-- [ ] Implement: `MariaDbBackupProvider` logic
+### [x] Task: Database Backup Providers (cbf0cd0)
+- [x] Write Tests: Verify `SqlServerBackupProvider` (mocking SQL Server commands)
+- [x] Write Tests: Verify `MariaDbBackupProvider` (mocking MariaDB commands)
+- [x] Implement: `SqlServerBackupProvider` logic
+- [x] Implement: `MariaDbBackupProvider` logic
 
 ### [ ] Task: File Synchronization Engine
 - [ ] Write Tests: Verify recursive directory scanning and hash generation
