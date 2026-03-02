@@ -34,8 +34,14 @@ The `FileHashSyncEngine` uses SHA256 hashing. You can verify its behavior by:
 2. Placing files in `source`.
 3. The engine (triggered via tests or future API) will only copy modified files based on hash changes.
 
-#### 4. Verify Compression
-The `CompressionUtility` can be verified via `StorageTests.cs`, which confirms that directories are correctly zipped and extracted.
+#### 5. Verify Dynamic Filenames (Phase 3)
+Filenames now follow the pattern: `{Source}_Full_{Timestamp}_{ShortHash}.{ext}`.
+You can verify this in logs or by inspecting simulation outputs in `ProviderTests.cs`.
+
+#### 6. Verify Change-Aware Skipping (Phase 3)
+- If a folder has no changes, the job will log "Skipped" and stop before the database/compression steps (if `SkipIfNoChanges` is true).
+- You can force a backup by setting `SkipIfNoChanges: false` in the job configuration.
+- Verification is covered in `EndToEndTests.cs`.
 
 ## Project Structure
 - `back-end/`: .NET 8 Web API and xUnit Tests.
