@@ -12,6 +12,7 @@ A versatile, extensible backup and file synchronization utility designed for bot
 ## Core Features
 - **Extensible Database Backups:** Initial support for SQL Server and MariaDB, with a plugin-ready architecture for future providers.
 - **Intelligent File Synchronization:** Advanced hash-based change detection for recursive file/folder backups, ensuring only modified data is processed.
+- **Intelligent Optimization:** Automatically skip backup and compression steps when no file changes are detected, with configurable overrides for critical jobs.
 - **Cross-Platform & Deployment:** Native support for Windows (running as a service) and Linux (Dockerized), with integrated Cron-like scheduling.
 - **Data Compression & Movement:** Seamless compression and transfer of files across different disk locations.
 - **Cloud & Remote Integration:** Built-in support for cloud storage (S3, Azure, Google Drive) and a remote-to-local synchronization capability for easy data retrieval.

@@ -12,6 +12,7 @@
 ## Frontend (Next.js)
 - **Framework:** Next.js (TypeScript) - For a modern, type-safe dashboard.
 - **State Management:** Logic-Repository pattern (as per Scholarity project context).
+- **UI Components:** `jattac.libs.web.zest-*` suite (ZestTextbox, ZestButton, ZestResponsiveLayout, ZestSidekickMenu, ResponsiveTable, OverflowMenu).
 - **Styling:** Vanilla CSS - For a clean, corporate, and precise UI.
 - **Communication:** Axios/Fetch for REST API and SignalR client for real-time updates.
 

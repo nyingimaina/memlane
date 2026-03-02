@@ -8,6 +8,7 @@ Memlane adopts a **Professional & Technical** communication style.
 
 ## Visual Aesthetic & Design
 The dashboard will follow a **Corporate & Precise** design philosophy.
+- **Component Consistency:** Utilize the `jattac.libs.web.zest-*` component library to ensure a unified, professional look and feel across the application.
 - **Data Density:** Layouts should prioritize information density without sacrificing clarity, using clean lines and a structured hierarchy.
 - **Clarity:** Utilize a consistent color palette to represent different job statuses (e.g., Success, Warning, Failure, In Progress).
 - **Responsive & Modern:** While corporate, the interface should feel modern and responsive, leveraging TypeScript for a robust user experience.
