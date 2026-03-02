@@ -2,8 +2,10 @@ using System.Data;
 using Dapper;
 using Polly;
 using Polly.Retry;
+using Moq;
 using Memlane.Api.Infrastructure;
 using Memlane.Api.Models;
+using Memlane.Api.Providers;
 using Xunit;
 
 namespace Memlane.Tests
@@ -93,6 +95,32 @@ namespace Memlane.Tests
             {
                 if (File.Exists(dbPath)) File.Delete(dbPath);
             }
+        }
+
+        [Fact]
+        public async Task BackupProvider_Contract_ShouldBeMockable()
+        {
+            var mockProvider = new Mock<IBackupProvider>();
+            mockProvider.Setup(p => p.ProviderName).Returns("MockProvider");
+            mockProvider.Setup(p => p.CreateBackupAsync(It.IsAny<string>(), It.IsAny<string>()))
+                        .ReturnsAsync("backup_file.bak");
+
+            var provider = mockProvider.Object;
+            Assert.Equal("MockProvider", provider.ProviderName);
+            var result = await provider.CreateBackupAsync("connection_string", "target_dir");
+            Assert.Equal("backup_file.bak", result);
+        }
+
+        [Fact]
+        public async Task StorageProvider_Contract_ShouldBeMockable()
+        {
+            var mockProvider = new Mock<IStorageProvider>();
+            mockProvider.Setup(p => p.ProviderName).Returns("MockStorage");
+            mockProvider.Setup(p => p.ExistsAsync("test_path")).ReturnsAsync(true);
+
+            var provider = mockProvider.Object;
+            Assert.Equal("MockStorage", provider.ProviderName);
+            Assert.True(await provider.ExistsAsync("test_path"));
         }
     }
 }
