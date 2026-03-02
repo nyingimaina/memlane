@@ -18,9 +18,10 @@
     "jattac.libs.web.zest-responsive-layout": "^2.2.0",
     "jattac.libs.web.zest-sidekick-menu": "^1.2.0",
     "jattac.libs.web.zest-textbox": "^0.5.3",
-    "next": "16.1.6",
-    "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "next": "^14.2.24",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-icons": "^5.5.0"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",

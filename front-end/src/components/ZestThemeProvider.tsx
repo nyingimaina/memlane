@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import ZestButtonConfigProvider from 'jattac.libs.web.zest-button/dist/ZestButtonConfigProvider';
-import { ZestTextboxConfigProvider } from 'jattac.libs.web.zest-textbox/dist/contexts/ZestTextboxConfigContext';
+import { ZestButtonConfigProvider } from 'jattac.libs.web.zest-button';
+import { ZestTextboxConfigProvider } from 'jattac.libs.web.zest-textbox';
 
 interface ZestThemeProviderProps {
     children: React.ReactNode;

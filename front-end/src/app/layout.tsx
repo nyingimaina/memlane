@@ -1,19 +1,9 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
-import { ZestResponsiveLayout } from "jattac.libs.web.zest-responsive-layout";
-import Sidebar from "@/components/Sidebar";
-import ZestThemeProvider from "@/components/ZestThemeProvider";
+import ClientLayout from "@/components/ClientLayout";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Memlane Dashboard",
@@ -27,21 +17,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <ZestThemeProvider>
-          <ZestResponsiveLayout 
-            sidePane={{
-              visible: true,
-              pane: <Sidebar />,
-              widthRems: 18
-            }}
-            detailPane={
-              <main className="main-content">
-                {children}
-              </main>
-            }
-          />
-        </ZestThemeProvider>
+      <body className={inter.className}>
+        <ClientLayout>
+          {children}
+        </ClientLayout>
       </body>
     </html>
   );
