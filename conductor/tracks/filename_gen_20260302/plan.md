@@ -9,7 +9,7 @@
 
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Dynamic Filename Generation' (Protocol in workflow.md) (6b4cfa7)
 
-## Phase 2: Change Detection & Skipping Logic
+## Phase 2: Change Detection & Skipping Logic [checkpoint: 6053c6c]
 
 ### [x] Task: Enhanced Change Detection (8f413c5)
 - [x] Write Tests: Verify `FileHashSyncEngine` correctly reports if changes occurred
@@ -23,7 +23,7 @@
 - [x] Implement: Add skip check and logging to `BackupJobOrchestrator`
 - [x] Implement: Ensure "Skipped" status is reported via SignalR and logged to SQLite
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Change Detection & Skipping Logic' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Change Detection & Skipping Logic' (Protocol in workflow.md) (6053c6c)
 
 ## Phase 3: Final Integration & Refinement
 
