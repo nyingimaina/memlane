@@ -4,26 +4,44 @@ import React from 'react';
 import { ZestResponsiveLayout } from "jattac.libs.web.zest-responsive-layout";
 import Sidebar from "@/components/Sidebar";
 import ZestThemeProvider from "@/components/ZestThemeProvider";
+import { UIProvider, useUI } from "@/logic/UIContext";
 
 interface ClientLayoutProps {
     children: React.ReactNode;
 }
 
-const ClientLayout: React.FC<ClientLayoutProps> = ({ children }) => {
+const LayoutContent: React.FC<ClientLayoutProps> = ({ children }) => {
+    const { sidePane, closeSidePane } = useUI();
+
     return (
-        <ZestThemeProvider>
+        <>
+            <Sidebar />
             <ZestResponsiveLayout 
                 sidePane={{
-                    visible: true,
-                    pane: <Sidebar />,
-                    widthRems: 18
+                    visible: sidePane.visible,
+                    pane: sidePane.content,
+                    title: sidePane.title,
+                    widthRems: sidePane.widthRems,
+                    onClose: closeSidePane
                 }}
                 detailPane={
-                    <main className="main-content">
+                    <main className="main-content" style={{ paddingLeft: '60px' }}>
                         {children}
                     </main>
                 }
             />
+        </>
+    );
+};
+
+const ClientLayout: React.FC<ClientLayoutProps> = ({ children }) => {
+    return (
+        <ZestThemeProvider>
+            <UIProvider>
+                <LayoutContent>
+                    {children}
+                </LayoutContent>
+            </UIProvider>
         </ZestThemeProvider>
     );
 };
