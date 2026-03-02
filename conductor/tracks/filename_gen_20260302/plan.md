@@ -16,12 +16,12 @@
 - [x] Implement: Update `ISyncEngine` to return `SyncResult` (or `bool`)
 - [x] Implement: Refactor `FileHashSyncEngine` to track if any file was copied/updated
 
-### [ ] Task: Orchestrator Skip Logic
-- [ ] Write Tests: Verify `BackupJobOrchestrator` skips tasks when no changes detected and `SkipIfNoChanges` is true
-- [ ] Write Tests: Verify `BackupJobOrchestrator` DOES NOT skip when `SkipIfNoChanges` is false
-- [ ] Implement: Add `SkipIfNoChanges` to `BackupJobConfiguration`
-- [ ] Implement: Add skip check and logging to `BackupJobOrchestrator`
-- [ ] Implement: Ensure "Skipped" status is reported via SignalR and logged to SQLite
+### [x] Task: Orchestrator Skip Logic (1f3a347)
+- [x] Write Tests: Verify `BackupJobOrchestrator` skips tasks when no changes detected and `SkipIfNoChanges` is true
+- [x] Write Tests: Verify `BackupJobOrchestrator` DOES NOT skip when `SkipIfNoChanges` is false
+- [x] Implement: Add `SkipIfNoChanges` to `BackupJobConfiguration`
+- [x] Implement: Add skip check and logging to `BackupJobOrchestrator`
+- [x] Implement: Ensure "Skipped" status is reported via SignalR and logged to SQLite
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Change Detection & Skipping Logic' (Protocol in workflow.md)
 
