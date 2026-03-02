@@ -32,11 +32,11 @@
 - [x] Write Tests: Verify sync logic (copy only modified files)
 - [x] Implement: `FileHashSyncEngine` with recursive hash checking
 
-### [ ] Task: Compression & Storage
-- [ ] Write Tests: Verify file compression/decompression logic
-- [ ] Write Tests: Verify `LocalStorageProvider` behavior
-- [ ] Implement: `CompressionUtility` (Zip/GZip)
-- [ ] Implement: `LocalStorageProvider` for file movement
+### [x] Task: Compression & Storage (4c44e93)
+- [x] Write Tests: Verify file compression/decompression logic
+- [x] Write Tests: Verify `LocalStorageProvider` behavior
+- [x] Implement: `CompressionUtility` (Zip/GZip)
+- [x] Implement: `LocalStorageProvider` for file movement
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Provider Implementation & Sync Logic' (Protocol in workflow.md)
 
