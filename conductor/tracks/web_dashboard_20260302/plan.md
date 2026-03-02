@@ -23,15 +23,15 @@
 
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Core Layout & Navigation' (Protocol in workflow.md) (5f8cfab)
 
-## Phase 3: Dashboard & Monitoring
+## Phase 3: Dashboard & Monitoring [checkpoint: 3e3b680]
 
-### [ ] Task: Job Monitoring Table
-- [ ] Implement: Create `JobsTable` using `ResponsiveTable`
-- [ ] Implement: Integrate real-time status updates from SignalR
-- [ ] Implement: Add `OverflowMenu` for job actions
+### [x] Task: Job Monitoring Table (2282402)
+- [x] Implement: Create `JobsTable` using `ResponsiveTable`
+- [x] Implement: Integrate real-time status updates from SignalR
+- [x] Implement: Add `OverflowMenu` for job actions
 
-### [ ] Task: Job Configuration UI
-- [ ] Implement: Create forms for job creation/editing using `ZestTextbox` and `ZestButton`
-- [ ] Implement: Final integration with backend API
+### [x] Task: Job Configuration UI
+- [x] Implement: Create forms for job creation/editing using `ZestTextbox` and `ZestButton`
+- [x] Implement: Final integration with backend API
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Dashboard & Monitoring' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Dashboard & Monitoring' (Protocol in workflow.md) (3e3b680)
