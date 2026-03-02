@@ -6,9 +6,16 @@ using Memlane.Api.Providers;
 
 namespace Memlane.Api.Services
 {
+    public enum JobExecutionResult
+    {
+        Completed,
+        Skipped,
+        Failed
+    }
+
     public interface IJobOrchestrator
     {
-        Task ExecuteJobAsync(JobMetadata job, CancellationToken stoppingToken);
+        Task<JobExecutionResult> ExecuteJobAsync(JobMetadata job, CancellationToken stoppingToken);
     }
 
     public class BackupJobOrchestrator : IJobOrchestrator
@@ -33,7 +40,7 @@ namespace Memlane.Api.Services
             _logger = logger;
         }
 
-        public async Task ExecuteJobAsync(JobMetadata job, CancellationToken stoppingToken)
+        public async Task<JobExecutionResult> ExecuteJobAsync(JobMetadata job, CancellationToken stoppingToken)
         {
             if (string.IsNullOrEmpty(job.ConfigurationJson))
             {
@@ -49,7 +56,26 @@ namespace Memlane.Api.Services
             _logger.LogInformation("Starting backup job {JobId}: {JobName}", job.Id, job.Name);
             await SendUpdateAsync(job.Id, "Started", "Starting backup job orchestration...", 0);
 
-            // 1. Database Backup (if applicable)
+            // 1. File Synchronization (if applicable) - WE DO THIS FIRST TO DETECT CHANGES
+            SyncResult? syncResult = null;
+            if (!string.IsNullOrEmpty(config.SourceDirectory) && !string.IsNullOrEmpty(config.TargetDirectory))
+            {
+                await SendUpdateAsync(job.Id, "FileSync", "Starting file synchronization...", 10);
+                _logger.LogInformation("Starting file synchronization from {Source} to {Target}...", config.SourceDirectory, config.TargetDirectory);
+                syncResult = await _syncEngine.SyncAsync(config.SourceDirectory, config.TargetDirectory);
+                _logger.LogInformation("File synchronization complete. {FilesSynced} files synced.", syncResult.FilesSynced);
+                await SendUpdateAsync(job.Id, "FileSync", $"File synchronization complete. {syncResult.FilesSynced} files synced.", 40);
+            }
+
+            // CHECK FOR CHANGES AND SKIP IF NECESSARY
+            if (config.SkipIfNoChanges && syncResult != null && !syncResult.ChangesDetected)
+            {
+                _logger.LogInformation("No changes detected for job {JobId}. Skipping database backup and compression.", job.Id);
+                await SendUpdateAsync(job.Id, "Skipped", "No changes detected. Skipping backup steps.", 100);
+                return JobExecutionResult.Skipped;
+            }
+
+            // 2. Database Backup (if applicable)
             string? backupFilePath = null;
             if (!string.IsNullOrEmpty(config.DbConnectionString) && !string.IsNullOrEmpty(config.DbProvider))
             {
@@ -59,25 +85,14 @@ namespace Memlane.Api.Services
                     throw new Exception($"Backup provider '{config.DbProvider}' not found.");
                 }
 
-                await SendUpdateAsync(job.Id, "DatabaseBackup", $"Creating database backup using {provider.ProviderName}...", 10);
+                await SendUpdateAsync(job.Id, "DatabaseBackup", $"Creating database backup using {provider.ProviderName}...", 50);
                 _logger.LogInformation("Creating database backup using {Provider}...", provider.ProviderName);
                 var tempDir = Path.Combine(Path.GetTempPath(), "Memlane_Temp_" + job.Id);
                 if (!Directory.Exists(tempDir)) Directory.CreateDirectory(tempDir);
                 
                 backupFilePath = await provider.CreateBackupAsync(config.DbConnectionString, tempDir);
                 _logger.LogInformation("Database backup created at {Path}", backupFilePath);
-                await SendUpdateAsync(job.Id, "DatabaseBackup", "Database backup complete.", 30);
-            }
-
-            // 2. File Synchronization (if applicable)
-            SyncResult? syncResult = null;
-            if (!string.IsNullOrEmpty(config.SourceDirectory) && !string.IsNullOrEmpty(config.TargetDirectory))
-            {
-                await SendUpdateAsync(job.Id, "FileSync", "Starting file synchronization...", 40);
-                _logger.LogInformation("Starting file synchronization from {Source} to {Target}...", config.SourceDirectory, config.TargetDirectory);
-                syncResult = await _syncEngine.SyncAsync(config.SourceDirectory, config.TargetDirectory);
-                _logger.LogInformation("File synchronization complete. {FilesSynced} files synced.", syncResult.FilesSynced);
-                await SendUpdateAsync(job.Id, "FileSync", "File synchronization complete.", 70);
+                await SendUpdateAsync(job.Id, "DatabaseBackup", "Database backup complete.", 70);
             }
 
             // 3. Compression (if enabled)
@@ -93,6 +108,7 @@ namespace Memlane.Api.Services
 
             await SendUpdateAsync(job.Id, "Completed", "Backup job finished successfully.", 100);
             _logger.LogInformation("Backup job {JobId} finished successfully.", job.Id);
+            return JobExecutionResult.Completed;
         }
 
         private async Task SendUpdateAsync(int jobId, string status, string message, int progress)
@@ -111,5 +127,6 @@ namespace Memlane.Api.Services
         public string? TargetDirectory { get; set; }
         public bool EnableCompression { get; set; }
         public string? ArchiveFileName { get; set; }
+        public bool SkipIfNoChanges { get; set; } = true;
     }
 }

@@ -175,14 +175,121 @@ namespace Memlane.Tests
             };
 
             // Act
-            await orchestrator.ExecuteJobAsync(job, CancellationToken.None);
+            var result = await orchestrator.ExecuteJobAsync(job, CancellationToken.None);
 
             // Assert
+            Assert.Equal(JobExecutionResult.Completed, result);
             mockBackupProvider.Verify(p => p.CreateBackupAsync(config.DbConnectionString, It.IsAny<string>()), Times.Once);
             mockSyncEngine.Verify(e => e.SyncAsync(config.SourceDirectory, config.TargetDirectory), Times.Once);
             
             // Verify that progress updates were sent
             mockClientProxy.Verify(c => c.SendCoreAsync("ReceiveStatusUpdate", It.Is<object[]>(o => ((JobStatusUpdate)o[0]).Status == "Completed"), default), Times.Once);
+        }
+
+        [Fact]
+        public async Task BackupJobOrchestrator_ShouldSkip_WhenNoChangesDetected()
+        {
+            // Arrange
+            var mockBackupProvider = new Mock<IBackupProvider>();
+            var mockStorageProvider = new Mock<IStorageProvider>();
+            var mockSyncEngine = new Mock<ISyncEngine>();
+            mockSyncEngine.Setup(e => e.SyncAsync(It.IsAny<string>(), It.IsAny<string>()))
+                         .ReturnsAsync(new SyncResult(false, 10, 0)); // No changes detected
+            var mockLogger = new Mock<ILogger<BackupJobOrchestrator>>();
+
+            // SignalR Mocking
+            var mockHubContext = new Mock<IHubContext<JobHub>>();
+            var mockClients = new Mock<IHubClients>();
+            var mockClientProxy = new Mock<IClientProxy>();
+            mockHubContext.Setup(h => h.Clients).Returns(mockClients.Object);
+            mockClients.Setup(c => c.All).Returns(mockClientProxy.Object);
+            mockClients.Setup(c => c.Group(It.IsAny<string>())).Returns(mockClientProxy.Object);
+
+            var orchestrator = new BackupJobOrchestrator(
+                new[] { mockBackupProvider.Object },
+                new[] { mockStorageProvider.Object },
+                mockSyncEngine.Object,
+                mockHubContext.Object,
+                mockLogger.Object);
+
+            var config = new BackupJobConfiguration
+            {
+                DbProvider = "SQL Server",
+                DbConnectionString = "Server=.;Database=Test;",
+                SourceDirectory = Path.Combine(Path.GetTempPath(), "source"),
+                TargetDirectory = Path.Combine(Path.GetTempPath(), "target"),
+                SkipIfNoChanges = true
+            };
+
+            var job = new JobMetadata
+            {
+                Id = 1,
+                Name = "SkipBackup",
+                ConfigurationJson = JsonSerializer.Serialize(config)
+            };
+
+            // Act
+            var result = await orchestrator.ExecuteJobAsync(job, CancellationToken.None);
+
+            // Assert
+            Assert.Equal(JobExecutionResult.Skipped, result);
+            mockBackupProvider.Verify(p => p.CreateBackupAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            
+            // Verify that "Skipped" update was sent
+            mockClientProxy.Verify(c => c.SendCoreAsync("ReceiveStatusUpdate", It.Is<object[]>(o => ((JobStatusUpdate)o[0]).Status == "Skipped"), default), Times.Once);
+        }
+
+        [Fact]
+        public async Task BackupJobOrchestrator_ShouldNotSkip_WhenSkipIfNoChangesIsFalse()
+        {
+            // Arrange
+            var mockBackupProvider = new Mock<IBackupProvider>();
+            mockBackupProvider.Setup(p => p.ProviderName).Returns("SQL Server");
+            mockBackupProvider.Setup(p => p.CreateBackupAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync("db.bak");
+
+            var mockStorageProvider = new Mock<IStorageProvider>();
+            var mockSyncEngine = new Mock<ISyncEngine>();
+            mockSyncEngine.Setup(e => e.SyncAsync(It.IsAny<string>(), It.IsAny<string>()))
+                         .ReturnsAsync(new SyncResult(false, 10, 0)); // No changes detected
+            var mockLogger = new Mock<ILogger<BackupJobOrchestrator>>();
+
+            // SignalR Mocking
+            var mockHubContext = new Mock<IHubContext<JobHub>>();
+            var mockClients = new Mock<IHubClients>();
+            var mockClientProxy = new Mock<IClientProxy>();
+            mockHubContext.Setup(h => h.Clients).Returns(mockClients.Object);
+            mockClients.Setup(c => c.All).Returns(mockClientProxy.Object);
+            mockClients.Setup(c => c.Group(It.IsAny<string>())).Returns(mockClientProxy.Object);
+
+            var orchestrator = new BackupJobOrchestrator(
+                new[] { mockBackupProvider.Object },
+                new[] { mockStorageProvider.Object },
+                mockSyncEngine.Object,
+                mockHubContext.Object,
+                mockLogger.Object);
+
+            var config = new BackupJobConfiguration
+            {
+                DbProvider = "SQL Server",
+                DbConnectionString = "Server=.;Database=Test;",
+                SourceDirectory = Path.Combine(Path.GetTempPath(), "source"),
+                TargetDirectory = Path.Combine(Path.GetTempPath(), "target"),
+                SkipIfNoChanges = false // FORCE BACKUP
+            };
+
+            var job = new JobMetadata
+            {
+                Id = 1,
+                Name = "ForceBackup",
+                ConfigurationJson = JsonSerializer.Serialize(config)
+            };
+
+            // Act
+            var result = await orchestrator.ExecuteJobAsync(job, CancellationToken.None);
+
+            // Assert
+            Assert.Equal(JobExecutionResult.Completed, result);
+            mockBackupProvider.Verify(p => p.CreateBackupAsync(config.DbConnectionString, It.IsAny<string>()), Times.Once);
         }
     }
 }

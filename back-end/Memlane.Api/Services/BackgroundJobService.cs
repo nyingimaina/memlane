@@ -67,17 +67,19 @@ namespace Memlane.Api.Services
 
             try
             {
+                JobExecutionResult result = JobExecutionResult.Failed;
                 await retryPolicy.ExecuteAsync(async () =>
                 {
                     using (var scope = _serviceProvider.CreateScope())
                     {
                         var orchestrator = scope.ServiceProvider.GetRequiredService<IJobOrchestrator>();
-                        await orchestrator.ExecuteJobAsync(job, stoppingToken);
+                        result = await orchestrator.ExecuteJobAsync(job, stoppingToken);
                     }
                 });
 
-                await repository.UpdateJobStatusAsync(job.Id, JobStatus.Completed);
-                _logger.LogInformation("Job {JobId} completed successfully.", job.Id);
+                var finalStatus = result == JobExecutionResult.Skipped ? JobStatus.Skipped : JobStatus.Completed;
+                await repository.UpdateJobStatusAsync(job.Id, finalStatus);
+                _logger.LogInformation("Job {JobId} finished with result: {Result}", job.Id, result);
             }
             catch (Exception ex)
             {

@@ -5,7 +5,8 @@ namespace Memlane.Api.Models
         Pending,
         InProgress,
         Completed,
-        Failed
+        Failed,
+        Skipped
     }
 
     public class JobMetadata
