@@ -17,5 +17,6 @@ namespace Memlane.Api.Models
         public DateTime CreatedAt { get; set; }
         public DateTime? LastRunAt { get; set; }
         public string? LastError { get; set; }
+        public string? ConfigurationJson { get; set; }
     }
 }

@@ -1,11 +1,14 @@
 using System.Data;
+using System.Text.Json;
 using Dapper;
 using Polly;
 using Polly.Retry;
 using Moq;
+using Microsoft.Extensions.Logging;
 using Memlane.Api.Infrastructure;
 using Memlane.Api.Models;
 using Memlane.Api.Providers;
+using Memlane.Api.Services;
 using Xunit;
 
 namespace Memlane.Tests
@@ -77,7 +80,8 @@ namespace Memlane.Tests
                     Name = "TestJob",
                     Type = "Backup",
                     Status = JobStatus.Pending,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    ConfigurationJson = "{}"
                 });
 
                 var pendingJobs = await repository.GetPendingJobsAsync();
@@ -121,6 +125,48 @@ namespace Memlane.Tests
             var provider = mockProvider.Object;
             Assert.Equal("MockStorage", provider.ProviderName);
             Assert.True(await provider.ExistsAsync("test_path"));
+        }
+
+        [Fact]
+        public async Task BackupJobOrchestrator_ShouldExecuteAllSteps()
+        {
+            // Arrange
+            var mockBackupProvider = new Mock<IBackupProvider>();
+            mockBackupProvider.Setup(p => p.ProviderName).Returns("SQL Server");
+            mockBackupProvider.Setup(p => p.CreateBackupAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync("db.bak");
+
+            var mockStorageProvider = new Mock<IStorageProvider>();
+            var mockSyncEngine = new Mock<ISyncEngine>();
+            var mockLogger = new Mock<ILogger<BackupJobOrchestrator>>();
+
+            var orchestrator = new BackupJobOrchestrator(
+                new[] { mockBackupProvider.Object },
+                new[] { mockStorageProvider.Object },
+                mockSyncEngine.Object,
+                mockLogger.Object);
+
+            var config = new BackupJobConfiguration
+            {
+                DbProvider = "SQL Server",
+                DbConnectionString = "Server=.;Database=Test;",
+                SourceDirectory = "C:\\Source",
+                TargetDirectory = "C:\\Target",
+                EnableCompression = false
+            };
+
+            var job = new JobMetadata
+            {
+                Id = 1,
+                Name = "FullBackup",
+                ConfigurationJson = JsonSerializer.Serialize(config)
+            };
+
+            // Act
+            await orchestrator.ExecuteJobAsync(job, CancellationToken.None);
+
+            // Assert
+            mockBackupProvider.Verify(p => p.CreateBackupAsync(config.DbConnectionString, It.IsAny<string>()), Times.Once);
+            mockSyncEngine.Verify(e => e.SyncAsync(config.SourceDirectory, config.TargetDirectory), Times.Once);
         }
     }
 }

@@ -69,10 +69,11 @@ namespace Memlane.Api.Services
             {
                 await retryPolicy.ExecuteAsync(async () =>
                 {
-                    // For now, this is where job-specific logic will go
-                    // e.g., if (job.Type == "Backup") ...
-                    _logger.LogInformation("Executing logic for job {JobId}...", job.Id);
-                    await Task.Delay(500, stoppingToken); // Simulate work
+                    using (var scope = _serviceProvider.CreateScope())
+                    {
+                        var orchestrator = scope.ServiceProvider.GetRequiredService<IJobOrchestrator>();
+                        await orchestrator.ExecuteJobAsync(job, stoppingToken);
+                    }
                 });
 
                 await repository.UpdateJobStatusAsync(job.Id, JobStatus.Completed);

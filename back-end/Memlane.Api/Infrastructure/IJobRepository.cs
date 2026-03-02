@@ -31,7 +31,8 @@ namespace Memlane.Api.Infrastructure
                     Status INTEGER NOT NULL,
                     CreatedAt DATETIME NOT NULL,
                     LastRunAt DATETIME,
-                    LastError TEXT
+                    LastError TEXT,
+                    ConfigurationJson TEXT
                 )");
         }
 
@@ -55,8 +56,8 @@ namespace Memlane.Api.Infrastructure
         {
             using var connection = _connectionFactory.CreateConnection();
             return await connection.QuerySingleAsync<int>(@"
-                INSERT INTO Jobs (Name, Type, Status, CreatedAt) 
-                VALUES (@Name, @Type, @Status, @CreatedAt);
+                INSERT INTO Jobs (Name, Type, Status, CreatedAt, ConfigurationJson) 
+                VALUES (@Name, @Type, @Status, @CreatedAt, @ConfigurationJson);
                 SELECT last_insert_rowid();",
                 job);
         }

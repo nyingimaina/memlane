@@ -1,4 +1,5 @@
 using Memlane.Api.Infrastructure;
+using Memlane.Api.Providers;
 using Memlane.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +12,10 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddSingleton<IDbConnectionFactory>(_ => new SqliteConnectionFactory(connectionString));
 builder.Services.AddScoped<IJobRepository, SqliteJobRepository>();
 builder.Services.AddSingleton<ISyncEngine, FileHashSyncEngine>();
+builder.Services.AddSingleton<IBackupProvider, SqlServerBackupProvider>();
+builder.Services.AddSingleton<IBackupProvider, MariaDbBackupProvider>();
+builder.Services.AddSingleton<IStorageProvider, LocalStorageProvider>();
+builder.Services.AddScoped<IJobOrchestrator, BackupJobOrchestrator>();
 builder.Services.AddHostedService<BackgroundJobService>();
 
 var app = builder.Build();
