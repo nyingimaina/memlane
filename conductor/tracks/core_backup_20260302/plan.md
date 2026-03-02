@@ -7,10 +7,10 @@
 - [x] Implement: Create .NET 8 Web API project and configure basic middleware
 - [x] Implement: Setup SQLite connection and Dapper configuration
 
-### [ ] Task: Persistence & Job Management Setup
-- [ ] Write Tests: Verify SQLite database connectivity and schema creation
-- [ ] Implement: Configure Hangfire with SQLite storage
-- [ ] Implement: Basic job registration and execution logic
+### [x] Task: Persistence & Job Management Setup (0e116c1)
+- [x] Write Tests: Verify SQLite database connectivity and schema creation
+- [x] Implement: Configure built-in background service (IHostedService/BackgroundService)
+- [x] Implement: Setup basic job registration and execution logic with Polly retries
 
 ### [ ] Task: Core Interfaces & Resilience
 - [ ] Write Tests: Verify `IBackupProvider` and `IStorageProvider` contract behavior (via mocks)
