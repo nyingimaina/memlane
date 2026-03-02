@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/back-end/">
+    <Project Path="back-end/Memlane.Api/Memlane.Api.csproj" />
+    <Project Path="back-end/Memlane.Tests/Memlane.Tests.csproj" />
+  </Folder>
+</Solution>
