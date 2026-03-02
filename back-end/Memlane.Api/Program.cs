@@ -10,6 +10,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
     ?? "Data Source=memlane.db";
 builder.Services.AddSingleton<IDbConnectionFactory>(_ => new SqliteConnectionFactory(connectionString));
 builder.Services.AddScoped<IJobRepository, SqliteJobRepository>();
+builder.Services.AddSingleton<ISyncEngine, FileHashSyncEngine>();
 builder.Services.AddHostedService<BackgroundJobService>();
 
 var app = builder.Build();
