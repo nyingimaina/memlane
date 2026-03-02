@@ -11,10 +11,10 @@
 
 ## Phase 2: Change Detection & Skipping Logic
 
-### [ ] Task: Enhanced Change Detection
-- [ ] Write Tests: Verify `FileHashSyncEngine` correctly reports if changes occurred
-- [ ] Implement: Update `ISyncEngine` to return `SyncResult` (or `bool`)
-- [ ] Implement: Refactor `FileHashSyncEngine` to track if any file was copied/updated
+### [x] Task: Enhanced Change Detection (8f413c5)
+- [x] Write Tests: Verify `FileHashSyncEngine` correctly reports if changes occurred
+- [x] Implement: Update `ISyncEngine` to return `SyncResult` (or `bool`)
+- [x] Implement: Refactor `FileHashSyncEngine` to track if any file was copied/updated
 
 ### [ ] Task: Orchestrator Skip Logic
 - [ ] Write Tests: Verify `BackupJobOrchestrator` skips tasks when no changes detected and `SkipIfNoChanges` is true
