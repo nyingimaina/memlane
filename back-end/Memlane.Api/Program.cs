@@ -1,13 +1,26 @@
 using Memlane.Api.Hubs;
 using Memlane.Api.Infrastructure;
+using Memlane.Api.Models;
 using Memlane.Api.Providers;
 using Memlane.Api.Services;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
     ?? "Data Source=memlane.db";
@@ -43,31 +56,48 @@ else
 }
 
 app.UseHttpsRedirection();
+app.UseCors();
 
 app.MapHub<JobHub>("/hubs/jobs");
 
-var summaries = new[]
+// Job API Endpoints
+app.MapGet("/api/jobs", async (IJobRepository repo) =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    return Results.Ok(await repo.GetAllJobsAsync());
+});
 
-app.MapGet("/weatherforecast", () =>
+app.MapGet("/api/jobs/{id}", async (int id, IJobRepository repo) =>
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+    var job = await repo.GetByIdAsync(id);
+    return job != null ? Results.Ok(job) : Results.NotFound();
+});
+
+app.MapPost("/api/jobs", async ([FromBody] JobMetadata job, IJobRepository repo) =>
+{
+    job.CreatedAt = DateTime.UtcNow;
+    job.Status = JobStatus.Pending;
+    var id = await repo.AddJobAsync(job);
+    job.Id = id;
+    return Results.Created($"/api/jobs/{id}", job);
+});
+
+app.MapPut("/api/jobs/{id}", async (int id, [FromBody] JobMetadata job, IJobRepository repo) =>
+{
+    job.Id = id;
+    await repo.UpdateAsync(job);
+    return Results.Ok(job);
+});
+
+app.MapDelete("/api/jobs/{id}", async (int id, IJobRepository repo) =>
+{
+    await repo.DeleteAsync(id);
+    return Results.NoContent();
+});
+
+app.MapPost("/api/jobs/{id}/trigger", async (int id, IJobRepository repo) =>
+{
+    await repo.UpdateJobStatusAsync(id, JobStatus.Pending);
+    return Results.Accepted();
+});
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

@@ -11,31 +11,8 @@ export const useJobLogic = () => {
     const fetchJobs = useCallback(async () => {
         setIsLoading(true);
         try {
-            // For initial manual testing until backend is fully wired
-            const mockData: JobMetadata[] = [
-                {
-                    id: 1,
-                    name: "Sample SQL Backup",
-                    type: "Backup",
-                    status: 0,
-                    createdAt: new Date().toISOString(),
-                    configurationJson: JSON.stringify({
-                        dbProvider: "SQL Server",
-                        sourceDirectory: "C:\\Data",
-                        targetDirectory: "D:\\Backups",
-                        enableCompression: true,
-                        skipIfNoChanges: true
-                    })
-                }
-            ];
-            
-            try {
-                const data = await JobRepository.getAll();
-                setJobs(data.length > 0 ? data : mockData);
-            } catch {
-                setJobs(mockData);
-            }
-            
+            const data = await JobRepository.getAll();
+            setJobs(data);
             setError(null);
         } catch (err) {
             console.error("Failed to fetch jobs:", err);

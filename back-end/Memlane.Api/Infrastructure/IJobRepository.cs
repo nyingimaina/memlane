@@ -6,9 +6,13 @@ namespace Memlane.Api.Infrastructure
     public interface IJobRepository
     {
         Task InitializeAsync();
+        Task<IEnumerable<JobMetadata>> GetAllJobsAsync();
         Task<IEnumerable<JobMetadata>> GetPendingJobsAsync();
         Task UpdateJobStatusAsync(int jobId, JobStatus status, string? error = null);
         Task<int> AddJobAsync(JobMetadata job);
+        Task<JobMetadata?> GetByIdAsync(int id);
+        Task DeleteAsync(int id);
+        Task UpdateAsync(JobMetadata job);
     }
 
     public class SqliteJobRepository : IJobRepository
@@ -36,6 +40,12 @@ namespace Memlane.Api.Infrastructure
                 )");
         }
 
+        public async Task<IEnumerable<JobMetadata>> GetAllJobsAsync()
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            return await connection.QueryAsync<JobMetadata>("SELECT * FROM Jobs ORDER BY CreatedAt DESC");
+        }
+
         public async Task<IEnumerable<JobMetadata>> GetPendingJobsAsync()
         {
             using var connection = _connectionFactory.CreateConnection();
@@ -60,6 +70,29 @@ namespace Memlane.Api.Infrastructure
                 VALUES (@Name, @Type, @Status, @CreatedAt, @ConfigurationJson);
                 SELECT last_insert_rowid();",
                 job);
+        }
+
+        public async Task<JobMetadata?> GetByIdAsync(int id)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            return await connection.QuerySingleOrDefaultAsync<JobMetadata>("SELECT * FROM Jobs WHERE Id = @Id", new { Id = id });
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            await connection.ExecuteAsync("DELETE FROM Jobs WHERE Id = @Id", new { Id = id });
+        }
+
+        public async Task UpdateAsync(JobMetadata job)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            await connection.ExecuteAsync(@"
+                UPDATE Jobs 
+                SET Name = @Name, 
+                    Type = @Type, 
+                    ConfigurationJson = @ConfigurationJson 
+                WHERE Id = @Id", job);
         }
     }
 }

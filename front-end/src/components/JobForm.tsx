@@ -16,7 +16,7 @@ const JobForm: React.FC<JobFormProps> = ({ initialJob, onSubmit, onCancel }) => 
     const [config, setConfig] = useState<BackupJobConfiguration>(
         initialJob?.configurationJson 
             ? JSON.parse(initialJob.configurationJson) 
-            : { enableCompression: true, skipIfNoChanges: true }
+            : { enableCompression: true, skipIfNoChanges: true, dbProvider: 'None' }
     );
 
     const handleSubmit = async () => {
@@ -27,10 +27,13 @@ const JobForm: React.FC<JobFormProps> = ({ initialJob, onSubmit, onCancel }) => 
         });
     };
 
+    const labelStyle: React.CSSProperties = { fontWeight: 600, fontSize: '0.9rem', color: 'var(--secondary)' };
+    const inputGroupStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.5rem' };
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '1rem' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--secondary)' }}>Job Name</label>
+            <div style={inputGroupStyle}>
+                <label style={labelStyle}>Job Name</label>
                 <ZestTextbox 
                     placeholder="e.g., Production SQL Server"
                     value={name}
@@ -40,8 +43,34 @@ const JobForm: React.FC<JobFormProps> = ({ initialJob, onSubmit, onCancel }) => 
                 />
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--secondary)' }}>Source Directory</label>
+            <div style={inputGroupStyle}>
+                <label style={labelStyle}>Database Provider</label>
+                <select 
+                    value={config.dbProvider} 
+                    onChange={(e) => setConfig({ ...config, dbProvider: e.target.value })}
+                    style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--foreground)' }}
+                >
+                    <option value="None">None (Files Only)</option>
+                    <option value="SQL Server">SQL Server</option>
+                    <option value="MariaDB">MariaDB</option>
+                </select>
+            </div>
+
+            {config.dbProvider !== 'None' && (
+                <div style={inputGroupStyle}>
+                    <label style={labelStyle}>Database Connection String</label>
+                    <ZestTextbox 
+                        placeholder="Server=...;Database=...;"
+                        value={config.dbConnectionString || ''}
+                        zest={{
+                            onTextChanged: (val) => setConfig({ ...config, dbConnectionString: val })
+                        }}
+                    />
+                </div>
+            )}
+
+            <div style={inputGroupStyle}>
+                <label style={labelStyle}>Source Directory (for files)</label>
                 <ZestTextbox 
                     placeholder="C:\Data\Files"
                     value={config.sourceDirectory || ''}
@@ -51,8 +80,8 @@ const JobForm: React.FC<JobFormProps> = ({ initialJob, onSubmit, onCancel }) => 
                 />
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--secondary)' }}>Target Directory</label>
+            <div style={inputGroupStyle}>
+                <label style={labelStyle}>Target Directory (backups will be stored here)</label>
                 <ZestTextbox 
                     placeholder="D:\Backups"
                     value={config.targetDirectory || ''}
@@ -61,6 +90,39 @@ const JobForm: React.FC<JobFormProps> = ({ initialJob, onSubmit, onCancel }) => 
                     }}
                 />
             </div>
+
+            <div style={{ display: 'flex', gap: '2rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                    <input 
+                        type="checkbox" 
+                        checked={config.enableCompression} 
+                        onChange={(e) => setConfig({ ...config, enableCompression: e.target.checked })}
+                    />
+                    <span style={labelStyle}>Enable Compression (ZIP)</span>
+                </label>
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                    <input 
+                        type="checkbox" 
+                        checked={config.skipIfNoChanges} 
+                        onChange={(e) => setConfig({ ...config, skipIfNoChanges: e.target.checked })}
+                    />
+                    <span style={labelStyle}>Skip if no changes detected</span>
+                </label>
+            </div>
+
+            {config.enableCompression && (
+                <div style={inputGroupStyle}>
+                    <label style={labelStyle}>Archive Filename</label>
+                    <ZestTextbox 
+                        placeholder="backup.zip"
+                        value={config.archiveFileName || ''}
+                        zest={{
+                            onTextChanged: (val) => setConfig({ ...config, archiveFileName: val })
+                        }}
+                    />
+                </div>
+            )}
 
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem' }}>
                 <ZestButton 
