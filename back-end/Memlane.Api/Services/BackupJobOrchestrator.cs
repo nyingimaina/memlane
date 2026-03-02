@@ -70,12 +70,13 @@ namespace Memlane.Api.Services
             }
 
             // 2. File Synchronization (if applicable)
+            SyncResult? syncResult = null;
             if (!string.IsNullOrEmpty(config.SourceDirectory) && !string.IsNullOrEmpty(config.TargetDirectory))
             {
                 await SendUpdateAsync(job.Id, "FileSync", "Starting file synchronization...", 40);
                 _logger.LogInformation("Starting file synchronization from {Source} to {Target}...", config.SourceDirectory, config.TargetDirectory);
-                await _syncEngine.SyncAsync(config.SourceDirectory, config.TargetDirectory);
-                _logger.LogInformation("File synchronization complete.");
+                syncResult = await _syncEngine.SyncAsync(config.SourceDirectory, config.TargetDirectory);
+                _logger.LogInformation("File synchronization complete. {FilesSynced} files synced.", syncResult.FilesSynced);
                 await SendUpdateAsync(job.Id, "FileSync", "File synchronization complete.", 70);
             }
 

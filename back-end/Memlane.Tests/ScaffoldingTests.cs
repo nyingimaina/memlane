@@ -139,6 +139,8 @@ namespace Memlane.Tests
 
             var mockStorageProvider = new Mock<IStorageProvider>();
             var mockSyncEngine = new Mock<ISyncEngine>();
+            mockSyncEngine.Setup(e => e.SyncAsync(It.IsAny<string>(), It.IsAny<string>()))
+                         .ReturnsAsync(new SyncResult(true, 10, 5));
             var mockLogger = new Mock<ILogger<BackupJobOrchestrator>>();
 
             // SignalR Mocking

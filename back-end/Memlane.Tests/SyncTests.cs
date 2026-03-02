@@ -40,12 +40,14 @@ namespace Memlane.Tests
             File.WriteAllText(sourceFile, "Hello World");
 
             // Act
-            await engine.SyncAsync(_sourceDir, _targetDir);
+            var result = await engine.SyncAsync(_sourceDir, _targetDir);
 
             // Assert
             var targetFile = Path.Combine(_targetDir, fileName);
             Assert.True(File.Exists(targetFile));
             Assert.Equal("Hello World", File.ReadAllText(targetFile));
+            Assert.True(result.ChangesDetected);
+            Assert.Equal(1, result.FilesSynced);
         }
 
         [Fact]
@@ -68,11 +70,35 @@ namespace Memlane.Tests
             var file2WriteTime = File.GetLastWriteTime(Path.Combine(_targetDir, file2));
             
             // Act
-            await engine.SyncAsync(_sourceDir, _targetDir);
+            var result = await engine.SyncAsync(_sourceDir, _targetDir);
 
             // Assert
             Assert.Equal("Modified Content 1", File.ReadAllText(Path.Combine(_targetDir, file1)));
             Assert.Equal(file2WriteTime, File.GetLastWriteTime(Path.Combine(_targetDir, file2)));
+            Assert.True(result.ChangesDetected);
+            Assert.Equal(1, result.FilesSynced);
+        }
+
+        [Fact]
+        public async Task SyncAsync_ShouldReturnFalse_WhenNoChanges()
+        {
+            // Arrange
+            var loggerMock = new Mock<ILogger<FileHashSyncEngine>>();
+            var engine = new FileHashSyncEngine(loggerMock.Object);
+            
+            var file1 = "file1.txt";
+            File.WriteAllText(Path.Combine(_sourceDir, file1), "Content 1");
+
+            // Initial sync
+            await engine.SyncAsync(_sourceDir, _targetDir);
+            
+            // Act
+            var result = await engine.SyncAsync(_sourceDir, _targetDir);
+
+            // Assert
+            Assert.False(result.ChangesDetected);
+            Assert.Equal(0, result.FilesSynced);
+            Assert.Equal(1, result.TotalFilesFound);
         }
 
         [Fact]
@@ -87,10 +113,11 @@ namespace Memlane.Tests
             File.WriteAllText(Path.Combine(subDir, "subfile.txt"), "Sub Content");
 
             // Act
-            await engine.SyncAsync(_sourceDir, _targetDir);
+            var result = await engine.SyncAsync(_sourceDir, _targetDir);
 
             // Assert
             Assert.True(File.Exists(Path.Combine(_targetDir, "sub", "subfile.txt")));
+            Assert.True(result.ChangesDetected);
         }
     }
 }

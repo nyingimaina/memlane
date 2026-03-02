@@ -2,9 +2,11 @@ using System.Security.Cryptography;
 
 namespace Memlane.Api.Services
 {
+    public record SyncResult(bool ChangesDetected, int TotalFilesFound, int FilesSynced);
+
     public interface ISyncEngine
     {
-        Task SyncAsync(string sourceDir, string targetDir);
+        Task<SyncResult> SyncAsync(string sourceDir, string targetDir);
     }
 
     public class FileHashSyncEngine : ISyncEngine
@@ -16,12 +18,12 @@ namespace Memlane.Api.Services
             _logger = logger;
         }
 
-        public async Task SyncAsync(string sourceDir, string targetDir)
+        public async Task<SyncResult> SyncAsync(string sourceDir, string targetDir)
         {
             if (!Directory.Exists(sourceDir))
             {
                 _logger.LogWarning("Source directory {SourceDir} does not exist.", sourceDir);
-                return;
+                return new SyncResult(false, 0, 0);
             }
 
             if (!Directory.Exists(targetDir))
@@ -30,6 +32,8 @@ namespace Memlane.Api.Services
             }
 
             var sourceFiles = Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories);
+            int filesSynced = 0;
+            bool changesDetected = false;
 
             foreach (var sourceFile in sourceFiles)
             {
@@ -38,6 +42,7 @@ namespace Memlane.Api.Services
 
                 if (await ShouldSyncAsync(sourceFile, targetFile))
                 {
+                    changesDetected = true;
                     _logger.LogInformation("Syncing {RelativePath}...", relativePath);
                     var targetSubDir = Path.GetDirectoryName(targetFile);
                     if (targetSubDir != null && !Directory.Exists(targetSubDir))
@@ -45,8 +50,11 @@ namespace Memlane.Api.Services
                         Directory.CreateDirectory(targetSubDir);
                     }
                     File.Copy(sourceFile, targetFile, true);
+                    filesSynced++;
                 }
             }
+
+            return new SyncResult(changesDetected, sourceFiles.Length, filesSynced);
         }
 
         private async Task<bool> ShouldSyncAsync(string sourceFile, string targetFile)
