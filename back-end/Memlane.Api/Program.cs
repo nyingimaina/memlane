@@ -1,4 +1,5 @@
 using Memlane.Api.Infrastructure;
+using Memlane.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +9,8 @@ builder.Services.AddOpenApi();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
     ?? "Data Source=memlane.db";
 builder.Services.AddSingleton<IDbConnectionFactory>(_ => new SqliteConnectionFactory(connectionString));
+builder.Services.AddScoped<IJobRepository, SqliteJobRepository>();
+builder.Services.AddHostedService<BackgroundJobService>();
 
 var app = builder.Build();
 
