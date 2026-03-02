@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ZestSidekickMenu } from 'jattac.libs.web.zest-sidekick-menu';
+import SidekickMenu from 'jattac.libs.web.zest-sidekick-menu';
 import { useRouter, usePathname } from 'next/navigation';
 
 const Sidebar: React.FC = () => {
@@ -12,38 +12,38 @@ const Sidebar: React.FC = () => {
         {
             id: 'dashboard',
             label: 'Dashboard',
-            icon: 'dashboard',
-            isActive: pathname === '/' || pathname === '/dashboard',
+            icon: '📊',
+            searchTerms: 'dashboard home statistics',
             onClick: () => router.push('/dashboard')
         },
         {
             id: 'jobs',
             label: 'Backup Jobs',
-            icon: 'work',
-            isActive: pathname.startsWith('/jobs'),
+            icon: '💼',
+            searchTerms: 'jobs backups configurations',
             onClick: () => router.push('/jobs')
         },
         {
             id: 'history',
             label: 'History',
-            icon: 'history',
-            isActive: pathname === '/history',
+            icon: '🕒',
+            searchTerms: 'history logs previous',
             onClick: () => router.push('/history')
         },
         {
             id: 'settings',
             label: 'Settings',
-            icon: 'settings',
-            isActive: pathname === '/settings',
+            icon: '⚙️',
+            searchTerms: 'settings preferences configuration',
             onClick: () => router.push('/settings')
         }
     ];
 
     return (
-        <ZestSidekickMenu
-            title="Memlane"
+        <SidekickMenu
             items={menuItems}
-            theme="corporate" // Assuming Zest components have theme options or CSS variable support
+            searchPlaceholder="Search Memlane..."
+            openOnDesktop={true}
         />
     );
 };
