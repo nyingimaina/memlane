@@ -163,6 +163,23 @@ button:active, .zest-button:active {
   height: 200%;
 }
 
+/* SidekickMenu Overrides/Fixes */
+/* Ensure the hamburger is above the responsive layout */
+[class*="SidekickMenu-module_hamburger"] {
+  z-index: 2000 !important;
+  left: 15px !important;
+  top: 15px !important;
+}
+
+[class*="SidekickMenu-module_panel"] {
+  z-index: 1999 !important;
+}
+
+/* Add a bit of space for the main content to not overlap with fixed hamburger */
+.main-content {
+  padding-top: 1rem;
+}
+
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;

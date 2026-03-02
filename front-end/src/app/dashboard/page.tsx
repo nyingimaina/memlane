@@ -1,52 +1,52 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
+import { useJobLogic } from '@/logic/useJobLogic';
+import JobsTable from '@/components/JobsTable';
 import ZestButton from 'jattac.libs.web.zest-button';
-import ZestTextbox from 'jattac.libs.web.zest-textbox';
+import { FaPlus } from 'react-icons/fa6';
 
 export default function DashboardPage() {
-  const [testValue, setTestValue] = useState('');
-
-  const handleAsyncAction = async () => {
-    console.log("Button clicked!");
-    // Simulate a delightful async backup trigger
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    console.log("Action completed!");
-  };
+  const { jobs, isLoading, error, triggerJob } = useJobLogic();
 
   return (
-    <div className="card" style={{ maxWidth: '600px', margin: '2rem auto' }}>
-      <h1>Dashboard Overview</h1>
-      <p style={{ marginBottom: '2rem' }}>Welcome to your Memlane control center. Experience the joy of reliable backups.</p>
-      
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        <ZestTextbox 
-          placeholder="Enter a job name to test feedback..."
-          maxLength={50}
-          value={testValue}
-          zest={{
-            onTextChanged: (val) => {
-              console.log("Text changed:", val);
-              setTestValue(val || '');
-            },
-            helperTextConfig: {
-              formatter: (ctx) => ctx.value ? `You are naming this: ${ctx.value}` : "Give your job a unique name"
-            }
-          }}
-        />
-
+    <div style={{ padding: '2rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <div>
+          <h1 style={{ margin: 0 }}>Dashboard</h1>
+          <p style={{ color: 'var(--secondary)', margin: 0 }}>Monitor and manage your automated backup jobs.</p>
+        </div>
         <ZestButton 
-          onClick={handleAsyncAction}
           zest={{
             visualOptions: {
-              variant: 'success'
-            },
-            semanticType: 'add'
+              variant: 'standard',
+              iconLeft: <FaPlus />
+            }
           }}
+          onClick={() => console.log("New Job Clicked")}
         >
-          Trigger Test Job
+          New Backup Job
         </ZestButton>
       </div>
+
+      {error && (
+        <div className="card" style={{ borderLeft: '4px solid var(--danger)', marginBottom: '2rem', backgroundColor: 'var(--danger-bg)' }}>
+          <p style={{ color: 'var(--danger)', margin: 0 }}>{error}</p>
+        </div>
+      )}
+
+      {isLoading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
+          <p>Loading your dashboard...</p>
+        </div>
+      ) : (
+        <JobsTable 
+          jobs={jobs} 
+          onTrigger={triggerJob}
+          onEdit={(job) => console.log("Edit", job)}
+          onDelete={(id) => console.log("Delete", id)}
+        />
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import React from 'react';
 import SidekickMenu from 'jattac.libs.web.zest-sidekick-menu';
 import { useRouter, usePathname } from 'next/navigation';
+import { FaChartLine, FaBriefcase, FaClockRotateLeft, FaGear } from 'react-icons/fa6';
 
 const Sidebar: React.FC = () => {
     const router = useRouter();
@@ -12,29 +13,29 @@ const Sidebar: React.FC = () => {
         {
             id: 'dashboard',
             label: 'Dashboard',
-            icon: '📊',
-            searchTerms: 'dashboard home statistics',
+            icon: <FaChartLine />,
+            searchTerms: 'dashboard home statistics overview',
             onClick: () => router.push('/dashboard')
         },
         {
             id: 'jobs',
             label: 'Backup Jobs',
-            icon: '💼',
-            searchTerms: 'jobs backups configurations',
+            icon: <FaBriefcase />,
+            searchTerms: 'jobs backups configurations management',
             onClick: () => router.push('/jobs')
         },
         {
             id: 'history',
             label: 'History',
-            icon: '🕒',
-            searchTerms: 'history logs previous',
+            icon: <FaClockRotateLeft />,
+            searchTerms: 'history logs previous sessions audit',
             onClick: () => router.push('/history')
         },
         {
             id: 'settings',
             label: 'Settings',
-            icon: '⚙️',
-            searchTerms: 'settings preferences configuration',
+            icon: <FaGear />,
+            searchTerms: 'settings preferences configuration global',
             onClick: () => router.push('/settings')
         }
     ];
@@ -43,7 +44,7 @@ const Sidebar: React.FC = () => {
         <SidekickMenu
             items={menuItems}
             searchPlaceholder="Search Memlane..."
-            openOnDesktop={true}
+            openOnDesktop={false}
         />
     );
 };

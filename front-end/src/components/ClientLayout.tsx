@@ -25,7 +25,7 @@ const LayoutContent: React.FC<ClientLayoutProps> = ({ children }) => {
                     onClose: closeSidePane
                 }}
                 detailPane={
-                    <main className="main-content" style={{ paddingLeft: '60px' }}>
+                    <main className="main-content" style={{ paddingLeft: '80px', paddingTop: '20px' }}>
                         {children}
                     </main>
                 }
