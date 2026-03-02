@@ -3,3 +3,6 @@
 This file tracks all major tracks for the project. Each track has its own detailed plan in its respective folder.
 
 ---
+
+- [x] **Track: Implement Dynamic Filename Generation and Change-Aware Skipping**
+  *Link: [./tracks/filename_gen_20260302/](./tracks/filename_gen_20260302/)*
