@@ -27,10 +27,10 @@
 - [x] Implement: `SqlServerBackupProvider` logic
 - [x] Implement: `MariaDbBackupProvider` logic
 
-### [ ] Task: File Synchronization Engine
-- [ ] Write Tests: Verify recursive directory scanning and hash generation
-- [ ] Write Tests: Verify sync logic (copy only modified files)
-- [ ] Implement: `FileHashSyncEngine` with recursive hash checking
+### [x] Task: File Synchronization Engine (7d3ce3f)
+- [x] Write Tests: Verify recursive directory scanning and hash generation
+- [x] Write Tests: Verify sync logic (copy only modified files)
+- [x] Implement: `FileHashSyncEngine` with recursive hash checking
 
 ### [ ] Task: Compression & Storage
 - [ ] Write Tests: Verify file compression/decompression logic
