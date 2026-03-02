@@ -1,4 +1,6 @@
 using System.Text.Json;
+using Microsoft.AspNetCore.SignalR;
+using Memlane.Api.Hubs;
 using Memlane.Api.Models;
 using Memlane.Api.Providers;
 
@@ -14,17 +16,20 @@ namespace Memlane.Api.Services
         private readonly IEnumerable<IBackupProvider> _backupProviders;
         private readonly IEnumerable<IStorageProvider> _storageProviders;
         private readonly ISyncEngine _syncEngine;
+        private readonly IHubContext<JobHub> _hubContext;
         private readonly ILogger<BackupJobOrchestrator> _logger;
 
         public BackupJobOrchestrator(
             IEnumerable<IBackupProvider> backupProviders,
             IEnumerable<IStorageProvider> storageProviders,
             ISyncEngine syncEngine,
+            IHubContext<JobHub> hubContext,
             ILogger<BackupJobOrchestrator> logger)
         {
             _backupProviders = backupProviders;
             _storageProviders = storageProviders;
             _syncEngine = syncEngine;
+            _hubContext = hubContext;
             _logger = logger;
         }
 
@@ -42,6 +47,7 @@ namespace Memlane.Api.Services
             }
 
             _logger.LogInformation("Starting backup job {JobId}: {JobName}", job.Id, job.Name);
+            await SendUpdateAsync(job.Id, "Started", "Starting backup job orchestration...", 0);
 
             // 1. Database Backup (if applicable)
             string? backupFilePath = null;
@@ -53,32 +59,46 @@ namespace Memlane.Api.Services
                     throw new Exception($"Backup provider '{config.DbProvider}' not found.");
                 }
 
+                await SendUpdateAsync(job.Id, "DatabaseBackup", $"Creating database backup using {provider.ProviderName}...", 10);
                 _logger.LogInformation("Creating database backup using {Provider}...", provider.ProviderName);
                 var tempDir = Path.Combine(Path.GetTempPath(), "Memlane_Temp_" + job.Id);
                 if (!Directory.Exists(tempDir)) Directory.CreateDirectory(tempDir);
                 
                 backupFilePath = await provider.CreateBackupAsync(config.DbConnectionString, tempDir);
                 _logger.LogInformation("Database backup created at {Path}", backupFilePath);
+                await SendUpdateAsync(job.Id, "DatabaseBackup", "Database backup complete.", 30);
             }
 
             // 2. File Synchronization (if applicable)
             if (!string.IsNullOrEmpty(config.SourceDirectory) && !string.IsNullOrEmpty(config.TargetDirectory))
             {
+                await SendUpdateAsync(job.Id, "FileSync", "Starting file synchronization...", 40);
                 _logger.LogInformation("Starting file synchronization from {Source} to {Target}...", config.SourceDirectory, config.TargetDirectory);
                 await _syncEngine.SyncAsync(config.SourceDirectory, config.TargetDirectory);
                 _logger.LogInformation("File synchronization complete.");
+                await SendUpdateAsync(job.Id, "FileSync", "File synchronization complete.", 70);
             }
 
             // 3. Compression (if enabled)
             if (config.EnableCompression && !string.IsNullOrEmpty(config.TargetDirectory) && !string.IsNullOrEmpty(config.ArchiveFileName))
             {
                 var archivePath = Path.Combine(config.TargetDirectory, config.ArchiveFileName);
+                await SendUpdateAsync(job.Id, "Compression", $"Compressing backup to {config.ArchiveFileName}...", 80);
                 _logger.LogInformation("Compressing backup to {ArchivePath}...", archivePath);
                 await CompressionUtility.CompressAsync(config.TargetDirectory, archivePath);
                 _logger.LogInformation("Compression complete.");
+                await SendUpdateAsync(job.Id, "Compression", "Compression complete.", 95);
             }
 
+            await SendUpdateAsync(job.Id, "Completed", "Backup job finished successfully.", 100);
             _logger.LogInformation("Backup job {JobId} finished successfully.", job.Id);
+        }
+
+        private async Task SendUpdateAsync(int jobId, string status, string message, int progress)
+        {
+            var update = new JobStatusUpdate(jobId, status, message, progress);
+            await _hubContext.Clients.Group($"Job_{jobId}").SendAsync("ReceiveStatusUpdate", update);
+            await _hubContext.Clients.All.SendAsync("ReceiveGlobalStatusUpdate", update);
         }
     }
 

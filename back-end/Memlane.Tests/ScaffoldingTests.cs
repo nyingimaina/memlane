@@ -5,6 +5,8 @@ using Polly;
 using Polly.Retry;
 using Moq;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.SignalR;
+using Memlane.Api.Hubs;
 using Memlane.Api.Infrastructure;
 using Memlane.Api.Models;
 using Memlane.Api.Providers;
@@ -128,7 +130,7 @@ namespace Memlane.Tests
         }
 
         [Fact]
-        public async Task BackupJobOrchestrator_ShouldExecuteAllSteps()
+        public async Task BackupJobOrchestrator_ShouldExecuteAllSteps_AndSendUpdates()
         {
             // Arrange
             var mockBackupProvider = new Mock<IBackupProvider>();
@@ -139,18 +141,27 @@ namespace Memlane.Tests
             var mockSyncEngine = new Mock<ISyncEngine>();
             var mockLogger = new Mock<ILogger<BackupJobOrchestrator>>();
 
+            // SignalR Mocking
+            var mockHubContext = new Mock<IHubContext<JobHub>>();
+            var mockClients = new Mock<IHubClients>();
+            var mockClientProxy = new Mock<IClientProxy>();
+            mockHubContext.Setup(h => h.Clients).Returns(mockClients.Object);
+            mockClients.Setup(c => c.All).Returns(mockClientProxy.Object);
+            mockClients.Setup(c => c.Group(It.IsAny<string>())).Returns(mockClientProxy.Object);
+
             var orchestrator = new BackupJobOrchestrator(
                 new[] { mockBackupProvider.Object },
                 new[] { mockStorageProvider.Object },
                 mockSyncEngine.Object,
+                mockHubContext.Object,
                 mockLogger.Object);
 
             var config = new BackupJobConfiguration
             {
                 DbProvider = "SQL Server",
                 DbConnectionString = "Server=.;Database=Test;",
-                SourceDirectory = "C:\\Source",
-                TargetDirectory = "C:\\Target",
+                SourceDirectory = Path.Combine(Path.GetTempPath(), "source"),
+                TargetDirectory = Path.Combine(Path.GetTempPath(), "target"),
                 EnableCompression = false
             };
 
@@ -167,6 +178,9 @@ namespace Memlane.Tests
             // Assert
             mockBackupProvider.Verify(p => p.CreateBackupAsync(config.DbConnectionString, It.IsAny<string>()), Times.Once);
             mockSyncEngine.Verify(e => e.SyncAsync(config.SourceDirectory, config.TargetDirectory), Times.Once);
+            
+            // Verify that progress updates were sent
+            mockClientProxy.Verify(c => c.SendCoreAsync("ReceiveStatusUpdate", It.Is<object[]>(o => ((JobStatusUpdate)o[0]).Status == "Completed"), default), Times.Once);
         }
     }
 }

@@ -1,3 +1,4 @@
+using Memlane.Api.Hubs;
 using Memlane.Api.Infrastructure;
 using Memlane.Api.Providers;
 using Memlane.Api.Services;
@@ -6,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddOpenApi();
+builder.Services.AddSignalR();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
     ?? "Data Source=memlane.db";
@@ -40,6 +42,8 @@ else
 }
 
 app.UseHttpsRedirection();
+
+app.MapHub<JobHub>("/hubs/jobs");
 
 var summaries = new[]
 {
