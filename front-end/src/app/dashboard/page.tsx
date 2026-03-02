@@ -8,6 +8,7 @@ export default function DashboardPage() {
   const [testValue, setTestValue] = useState('');
 
   const handleAsyncAction = async () => {
+    console.log("Button clicked!");
     // Simulate a delightful async backup trigger
     await new Promise(resolve => setTimeout(resolve, 1500));
     console.log("Action completed!");
@@ -23,10 +24,13 @@ export default function DashboardPage() {
           placeholder="Enter a job name to test feedback..."
           maxLength={50}
           value={testValue}
-          onChange={(e) => setTestValue(e.target.value)}
           zest={{
+            onTextChanged: (val) => {
+              console.log("Text changed:", val);
+              setTestValue(val || '');
+            },
             helperTextConfig: {
-              formatter: () => testValue ? `You are naming this: ${testValue}` : "Give your job a unique name"
+              formatter: (ctx) => ctx.value ? `You are naming this: ${ctx.value}` : "Give your job a unique name"
             }
           }}
         />
@@ -35,8 +39,7 @@ export default function DashboardPage() {
           onClick={handleAsyncAction}
           zest={{
             visualOptions: {
-              variant: 'success',
-              stretch: true
+              variant: 'success'
             },
             semanticType: 'add'
           }}

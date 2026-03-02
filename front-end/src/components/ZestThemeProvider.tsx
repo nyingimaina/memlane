@@ -13,10 +13,13 @@ const ZestThemeProvider: React.FC<ZestThemeProviderProps> = ({ children }) => {
     const buttonConfig = {
         defaultProps: {
             theme: 'system' as const,
+            visualOptions: {
+                stretch: false
+            },
             busyOptions: {
                 handleInternally: true,
                 preventRageClick: true,
-                minBusyDurationMs: 600 // Slight delay for satisfying feedback
+                minBusyDurationMs: 600
             },
             successOptions: {
                 showCheckmark: true,
@@ -31,7 +34,8 @@ const ZestThemeProvider: React.FC<ZestThemeProviderProps> = ({ children }) => {
         animatedCounter: true,
         showProgressBar: true,
         helperTextPositioning: 'reserved' as const,
-        zSize: 'md' as const
+        zSize: 'md' as const,
+        stretch: true
     };
 
     return (
