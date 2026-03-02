@@ -14,6 +14,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddSingleton<IDbConnectionFactory>(_ => new SqliteConnectionFactory(connectionString));
 builder.Services.AddScoped<IJobRepository, SqliteJobRepository>();
 builder.Services.AddSingleton<ISyncEngine, FileHashSyncEngine>();
+builder.Services.AddSingleton<IFilenameGenerator, SortableFilenameGenerator>();
 builder.Services.AddSingleton<IBackupProvider, SqlServerBackupProvider>();
 builder.Services.AddSingleton<IBackupProvider, MariaDbBackupProvider>();
 builder.Services.AddSingleton<IStorageProvider, LocalStorageProvider>();
