@@ -12,10 +12,10 @@
 - [x] Implement: Configure built-in background service (IHostedService/BackgroundService)
 - [x] Implement: Setup basic job registration and execution logic with Polly retries
 
-### [ ] Task: Core Interfaces & Resilience
-- [ ] Write Tests: Verify `IBackupProvider` and `IStorageProvider` contract behavior (via mocks)
-- [ ] Implement: Define `IBackupProvider` and `IStorageProvider` interfaces
-- [ ] Implement: Setup Polly retry policies for transient error handling
+### [x] Task: Core Interfaces & Resilience (82a4472)
+- [x] Write Tests: Verify `IBackupProvider` and `IStorageProvider` contract behavior (via mocks)
+- [x] Implement: Define `IBackupProvider` and `IStorageProvider` interfaces
+- [x] Implement: Setup Polly retry policies for transient error handling
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Infrastructure & Core Abstractions' (Protocol in workflow.md)
 
