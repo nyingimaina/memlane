@@ -13,22 +13,24 @@ interface JobFormProps {
 
 const JobForm: React.FC<JobFormProps> = ({ initialJob, onSubmit, onCancel }) => {
     const [name, setName] = useState(initialJob?.name || '');
+    const [cronExpression, setCronExpression] = useState(initialJob?.cronExpression || '');
     const [config, setConfig] = useState<BackupJobConfiguration>(
         initialJob?.configurationJson 
             ? JSON.parse(initialJob.configurationJson) 
-            : { enableCompression: true, skipIfNoChanges: true, dbProvider: 'None', storageProvider: 'Folder' }
+            : { enableCompression: true, skipIfNoChanges: true, dbProvider: 'None', storageProvider: 'Folder', retentionCount: 5 }
     );
 
     const handleSubmit = async () => {
         await onSubmit({
             name,
             type: 'Backup',
+            cronExpression: cronExpression || undefined,
             configurationJson: JSON.stringify(config)
         });
     };
 
-    const labelStyle: React.CSSProperties = { fontWeight: 600, fontSize: '0.9rem', color: 'var(--secondary)' };
-    const inputGroupStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.5rem' };
+    const labelStyle: React.CSSProperties = { fontWeight: 600, fontSize: '0.85rem', color: 'var(--secondary)' };
+    const inputGroupStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.4rem' };
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '1rem' }}>
@@ -37,8 +39,20 @@ const JobForm: React.FC<JobFormProps> = ({ initialJob, onSubmit, onCancel }) => 
                 <ZestTextbox 
                     placeholder="e.g., Production SQL Server"
                     value={name}
-                    zest={{
-                        onTextChanged: (val) => setName(val || '')
+                    zest={{ onTextChanged: (val) => setName(val || '') }}
+                />
+            </div>
+
+            <div style={inputGroupStyle}>
+                <label style={labelStyle}>Cron Schedule (Optional)</label>
+                <ZestTextbox 
+                    placeholder="e.g., 0 0 * * * (Daily at midnight)"
+                    value={cronExpression}
+                    zest={{ 
+                        onTextChanged: (val) => setCronExpression(val || ''),
+                        helperTextConfig: {
+                            formatter: () => "Standard cron format: min hour day month dow"
+                        }
                     }}
                 />
             </div>
@@ -77,33 +91,43 @@ const JobForm: React.FC<JobFormProps> = ({ initialJob, onSubmit, onCancel }) => 
                     <ZestTextbox 
                         placeholder="Server=...;Database=...;"
                         value={config.dbConnectionString || ''}
-                        zest={{
-                            onTextChanged: (val) => setConfig({ ...config, dbConnectionString: val })
-                        }}
+                        zest={{ onTextChanged: (val) => setConfig({ ...config, dbConnectionString: val }) }}
                     />
                 </div>
             )}
 
             <div style={inputGroupStyle}>
-                <label style={labelStyle}>Source Folder (for local file sync)</label>
+                <label style={labelStyle}>Source Folder Path</label>
                 <ZestTextbox 
                     placeholder="C:\Data\Files"
                     value={config.sourceDirectory || ''}
-                    zest={{
-                        onTextChanged: (val) => setConfig({ ...config, sourceDirectory: val })
-                    }}
+                    zest={{ onTextChanged: (val) => setConfig({ ...config, sourceDirectory: val }) }}
                 />
             </div>
 
-            <div style={inputGroupStyle}>
-                <label style={labelStyle}>Target Destination Path</label>
-                <ZestTextbox 
-                    placeholder={config.storageProvider === 'S3' ? "my-bucket/backups" : "D:\Backups"}
-                    value={config.targetDestination || ''}
-                    zest={{
-                        onTextChanged: (val) => setConfig({ ...config, targetDestination: val })
-                    }}
-                />
+            <div style={{ display: 'grid', gridTemplateColumns: config.storageProvider !== 'S3' ? '2fr 1fr' : '1fr', gap: '1rem' }}>
+                <div style={inputGroupStyle}>
+                    <label style={labelStyle}>Target Destination Path</label>
+                    <ZestTextbox 
+                        placeholder={config.storageProvider === 'S3' ? "my-bucket/backups" : "D:\Backups"}
+                        value={config.targetDestination || ''}
+                        zest={{ onTextChanged: (val) => setConfig({ ...config, targetDestination: val }) }}
+                    />
+                </div>
+
+                {config.storageProvider !== 'S3' && (
+                    <div style={inputGroupStyle}>
+                        <label style={labelStyle}>Rotation (Keep Last N)</label>
+                        <ZestTextbox 
+                            type="number"
+                            value={config.retentionCount.toString()}
+                            zest={{ 
+                                onTextChanged: (val) => setConfig({ ...config, retentionCount: parseInt(val || '0') }),
+                                zSize: 'md'
+                            }}
+                        />
+                    </div>
+                )}
             </div>
 
             <div style={{ display: 'flex', gap: '2rem', padding: '0.5rem', background: 'var(--info-bg)', borderRadius: '8px' }}>
@@ -113,7 +137,7 @@ const JobForm: React.FC<JobFormProps> = ({ initialJob, onSubmit, onCancel }) => 
                         checked={config.enableCompression} 
                         onChange={(e) => setConfig({ ...config, enableCompression: e.target.checked })}
                     />
-                    <span style={labelStyle}>Enable Compression (ZIP)</span>
+                    <span style={labelStyle}>Enable ZIP Compression</span>
                 </label>
 
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
@@ -126,35 +150,16 @@ const JobForm: React.FC<JobFormProps> = ({ initialJob, onSubmit, onCancel }) => 
                 </label>
             </div>
 
-            {config.enableCompression && (
-                <div style={inputGroupStyle}>
-                    <label style={labelStyle}>Archive Filename</label>
-                    <ZestTextbox 
-                        placeholder="backup.zip"
-                        value={config.archiveFileName || ''}
-                        zest={{
-                            onTextChanged: (val) => setConfig({ ...config, archiveFileName: val })
-                        }}
-                    />
-                </div>
-            )}
-
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
                 <ZestButton 
                     onClick={onCancel}
-                    zest={{
-                        visualOptions: { variant: 'standard' },
-                        semanticType: 'cancel'
-                    }}
+                    zest={{ visualOptions: { variant: 'standard' }, semanticType: 'cancel' }}
                 >
                     Cancel
                 </ZestButton>
                 <ZestButton 
                     onClick={handleSubmit}
-                    zest={{
-                        visualOptions: { variant: 'success' },
-                        semanticType: 'save'
-                    }}
+                    zest={{ visualOptions: { variant: 'success' }, semanticType: 'save' }}
                 >
                     {initialJob ? 'Update Pipeline' : 'Create Pipeline'}
                 </ZestButton>

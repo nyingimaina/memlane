@@ -15,6 +15,8 @@ export interface JobMetadata {
     lastRunAt?: string;
     lastError?: string;
     configurationJson?: string;
+    cronExpression?: string;
+    nextRunAt?: string;
 }
 
 export interface JobStatusUpdate {
@@ -33,4 +35,5 @@ export interface BackupJobConfiguration {
     enableCompression: boolean;
     archiveFileName?: string;
     skipIfNoChanges: boolean;
+    retentionCount: number;
 }

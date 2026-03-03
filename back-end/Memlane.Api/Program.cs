@@ -4,6 +4,7 @@ using Memlane.Api.Models;
 using Memlane.Api.Providers;
 using Memlane.Api.Services;
 using Microsoft.AspNetCore.Mvc;
+using Cronos;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +34,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddSingleton<IDbConnectionFactory>(_ => new SqliteConnectionFactory(connectionString));
 builder.Services.AddScoped<IJobRepository, SqliteJobRepository>();
 builder.Services.AddSingleton<ISyncEngine, FileHashSyncEngine>();
+builder.Services.AddSingleton<IRetentionManager, RetentionManager>();
 builder.Services.AddSingleton<IFilenameGenerator, SortableFilenameGenerator>();
 builder.Services.AddSingleton<IBackupProvider, SqlServerBackupProvider>();
 builder.Services.AddSingleton<IBackupProvider, MariaDbBackupProvider>();
@@ -85,6 +87,13 @@ app.MapPost("/api/jobs", async ([FromBody] JobMetadata job, IJobRepository repo)
 {
     job.CreatedAt = DateTime.UtcNow;
     job.Status = JobStatus.Pending;
+    
+    if (!string.IsNullOrEmpty(job.CronExpression))
+    {
+        var cron = CronExpression.Parse(job.CronExpression);
+        job.NextRunAt = cron.GetNextOccurrence(DateTime.UtcNow);
+    }
+
     var id = await repo.AddJobAsync(job);
     job.Id = id;
     return Results.Created($"/api/jobs/{id}", job);
@@ -93,6 +102,16 @@ app.MapPost("/api/jobs", async ([FromBody] JobMetadata job, IJobRepository repo)
 app.MapPut("/api/jobs/{id}", async (int id, [FromBody] JobMetadata job, IJobRepository repo) =>
 {
     job.Id = id;
+    
+    if (!string.IsNullOrEmpty(job.CronExpression))
+    {
+        var cron = CronExpression.Parse(job.CronExpression);
+        job.NextRunAt = cron.GetNextOccurrence(DateTime.UtcNow);
+    }
+    else {
+        job.NextRunAt = null;
+    }
+
     await repo.UpdateAsync(job);
     return Results.Ok(job);
 });

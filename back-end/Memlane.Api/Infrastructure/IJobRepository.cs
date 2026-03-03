@@ -8,7 +8,9 @@ namespace Memlane.Api.Infrastructure
         Task InitializeAsync();
         Task<IEnumerable<JobMetadata>> GetAllJobsAsync();
         Task<IEnumerable<JobMetadata>> GetPendingJobsAsync();
+        Task<IEnumerable<JobMetadata>> GetScheduledJobsToRunAsync();
         Task UpdateJobStatusAsync(int jobId, JobStatus status, string? error = null);
+        Task UpdateNextRunTimeAsync(int jobId, DateTime? nextRunAt);
         Task<int> AddJobAsync(JobMetadata job);
         Task<JobMetadata?> GetByIdAsync(int id);
         Task DeleteAsync(int id);
@@ -36,7 +38,9 @@ namespace Memlane.Api.Infrastructure
                     CreatedAt DATETIME NOT NULL,
                     LastRunAt DATETIME,
                     LastError TEXT,
-                    ConfigurationJson TEXT
+                    ConfigurationJson TEXT,
+                    CronExpression TEXT,
+                    NextRunAt DATETIME
                 )");
         }
 
@@ -54,6 +58,14 @@ namespace Memlane.Api.Infrastructure
                 new { Status = JobStatus.Pending });
         }
 
+        public async Task<IEnumerable<JobMetadata>> GetScheduledJobsToRunAsync()
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            return await connection.QueryAsync<JobMetadata>(
+                "SELECT * FROM Jobs WHERE NextRunAt <= @Now AND Status != @Status", 
+                new { Now = DateTime.UtcNow, Status = JobStatus.InProgress });
+        }
+
         public async Task UpdateJobStatusAsync(int jobId, JobStatus status, string? error = null)
         {
             using var connection = _connectionFactory.CreateConnection();
@@ -62,12 +74,20 @@ namespace Memlane.Api.Infrastructure
                 new { Id = jobId, Status = status, LastRunAt = DateTime.UtcNow, LastError = error });
         }
 
+        public async Task UpdateNextRunTimeAsync(int jobId, DateTime? nextRunAt)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            await connection.ExecuteAsync(
+                "UPDATE Jobs SET NextRunAt = @NextRunAt WHERE Id = @Id",
+                new { Id = jobId, NextRunAt = nextRunAt });
+        }
+
         public async Task<int> AddJobAsync(JobMetadata job)
         {
             using var connection = _connectionFactory.CreateConnection();
             return await connection.QuerySingleAsync<int>(@"
-                INSERT INTO Jobs (Name, Type, Status, CreatedAt, ConfigurationJson) 
-                VALUES (@Name, @Type, @Status, @CreatedAt, @ConfigurationJson);
+                INSERT INTO Jobs (Name, Type, Status, CreatedAt, ConfigurationJson, CronExpression, NextRunAt) 
+                VALUES (@Name, @Type, @Status, @CreatedAt, @ConfigurationJson, @CronExpression, @NextRunAt);
                 SELECT last_insert_rowid();",
                 job);
         }
@@ -91,7 +111,9 @@ namespace Memlane.Api.Infrastructure
                 UPDATE Jobs 
                 SET Name = @Name, 
                     Type = @Type, 
-                    ConfigurationJson = @ConfigurationJson 
+                    ConfigurationJson = @ConfigurationJson,
+                    CronExpression = @CronExpression,
+                    NextRunAt = @NextRunAt
                 WHERE Id = @Id", job);
         }
     }

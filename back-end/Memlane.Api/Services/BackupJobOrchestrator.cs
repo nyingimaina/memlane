@@ -23,6 +23,7 @@ namespace Memlane.Api.Services
         private readonly IEnumerable<IBackupProvider> _backupProviders;
         private readonly IStorageProviderFactory _storageProviderFactory;
         private readonly ISyncEngine _syncEngine;
+        private readonly IRetentionManager _retentionManager;
         private readonly IHubContext<JobHub> _hubContext;
         private readonly ILogger<BackupJobOrchestrator> _logger;
 
@@ -30,12 +31,14 @@ namespace Memlane.Api.Services
             IEnumerable<IBackupProvider> backupProviders,
             IStorageProviderFactory storageProviderFactory,
             ISyncEngine syncEngine,
+            IRetentionManager retentionManager,
             IHubContext<JobHub> hubContext,
             ILogger<BackupJobOrchestrator> logger)
         {
             _backupProviders = backupProviders;
             _storageProviderFactory = storageProviderFactory;
             _syncEngine = syncEngine;
+            _retentionManager = retentionManager;
             _hubContext = hubContext;
             _logger = logger;
         }
@@ -84,7 +87,7 @@ namespace Memlane.Api.Services
 
                 // 3. Skip Check (If no DB backup and no file changes)
                 bool hasChanges = (dbBackupFile != null) || (syncResult != null && syncResult.ChangesDetected);
-                if (config.SkipIfNoChanges && !hasChanges)
+                if (hasChanges == false && config.SkipIfNoChanges)
                 {
                     _logger.LogInformation("No changes detected for job {JobId}. Pipeline halted.", job.Id);
                     await SendUpdateAsync(job.Id, "Skipped", "No data changes detected. Skipping storage steps.", 100);
@@ -110,6 +113,13 @@ namespace Memlane.Api.Services
                     await SendUpdateAsync(job.Id, "Storage", $"Transferring to {storage.ProviderName}...", 90);
                     await storage.SaveAsync(artifactPath, config.TargetDestination);
                     _logger.LogInformation("Transfer to storage complete.");
+
+                    // 6. Backup Rotation (Pruning)
+                    if (config.RetentionCount > 0 && (config.StorageProvider == "Local" || config.StorageProvider == "Folder"))
+                    {
+                        await SendUpdateAsync(job.Id, "Rotation", "Pruning old backups...", 95);
+                        await _retentionManager.RotateBackupsAsync(config.TargetDestination, config.RetentionCount);
+                    }
 
                     // If it was a compressed file in Temp, clean it up
                     if (artifactPath != tempDir && File.Exists(artifactPath)) File.Delete(artifactPath);
@@ -141,5 +151,6 @@ namespace Memlane.Api.Services
         public bool EnableCompression { get; set; }
         public string? ArchiveFileName { get; set; }
         public bool SkipIfNoChanges { get; set; } = true;
+        public int RetentionCount { get; set; }
     }
 }

@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "/weAJAbQS0s=",
+  "dgSpecHash": "uUot6ts7xEE=",
   "success": true,
   "projectFilePath": "D:\\work\\nyingi\\code\\Memlane\\back-end\\Memlane.Api\\Memlane.Api.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\nying\\.nuget\\packages\\azure.core\\1.50.0\\azure.core.1.50.0.nupkg.sha512",
     "C:\\Users\\nying\\.nuget\\packages\\azure.identity\\1.17.1\\azure.identity.1.17.1.nupkg.sha512",
+    "C:\\Users\\nying\\.nuget\\packages\\cronos\\0.11.1\\cronos.0.11.1.nupkg.sha512",
     "C:\\Users\\nying\\.nuget\\packages\\dapper\\2.1.66\\dapper.2.1.66.nupkg.sha512",
     "C:\\Users\\nying\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.3\\microsoft.aspnetcore.openapi.10.0.3.nupkg.sha512",
     "C:\\Users\\nying\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\8.0.0\\microsoft.bcl.asyncinterfaces.8.0.0.nupkg.sha512",

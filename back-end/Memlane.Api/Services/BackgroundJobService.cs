@@ -1,6 +1,7 @@
 using Memlane.Api.Infrastructure;
 using Memlane.Api.Models;
 using Polly;
+using Cronos;
 
 namespace Memlane.Api.Services
 {
@@ -32,9 +33,17 @@ namespace Memlane.Api.Services
                     using (var scope = _serviceProvider.CreateScope())
                     {
                         var repository = scope.ServiceProvider.GetRequiredService<IJobRepository>();
+                        
+                        // 1. Check for manual "Pending" jobs
                         var pendingJobs = await repository.GetPendingJobsAsync();
-
                         foreach (var job in pendingJobs)
+                        {
+                            await ProcessJobAsync(job, repository, stoppingToken);
+                        }
+
+                        // 2. Check for "Scheduled" jobs that are due
+                        var scheduledJobs = await repository.GetScheduledJobsToRunAsync();
+                        foreach (var job in scheduledJobs)
                         {
                             await ProcessJobAsync(job, repository, stoppingToken);
                         }
@@ -79,12 +88,34 @@ namespace Memlane.Api.Services
 
                 var finalStatus = result == JobExecutionResult.Skipped ? JobStatus.Skipped : JobStatus.Completed;
                 await repository.UpdateJobStatusAsync(job.Id, finalStatus);
+                
+                // If it's a scheduled job, calculate the next run time
+                if (!string.IsNullOrEmpty(job.CronExpression))
+                {
+                    try {
+                        var cron = CronExpression.Parse(job.CronExpression);
+                        var nextUtc = cron.GetNextOccurrence(DateTime.UtcNow);
+                        await repository.UpdateNextRunTimeAsync(job.Id, nextUtc);
+                        _logger.LogInformation("Job {JobId} scheduled for next run at {NextRun}", job.Id, nextUtc);
+                    } catch (Exception ex) {
+                        _logger.LogError(ex, "Failed to parse cron expression for job {JobId}", job.Id);
+                    }
+                }
+
                 _logger.LogInformation("Job {JobId} finished with result: {Result}", job.Id, result);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Job {JobId} failed after retries.", job.Id);
                 await repository.UpdateJobStatusAsync(job.Id, JobStatus.Failed, ex.Message);
+                
+                // Still schedule next run if it's a cron job
+                if (!string.IsNullOrEmpty(job.CronExpression))
+                {
+                    var cron = CronExpression.Parse(job.CronExpression);
+                    var nextUtc = cron.GetNextOccurrence(DateTime.UtcNow);
+                    await repository.UpdateNextRunTimeAsync(job.Id, nextUtc);
+                }
             }
         }
     }

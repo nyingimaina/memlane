@@ -38,6 +38,19 @@
           }
         }
       },
+      "Cronos/0.11.1": {
+        "type": "package",
+        "compile": {
+          "lib/net6.0/Cronos.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/Cronos.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "Dapper/2.1.66": {
         "type": "package",
         "compile": {
@@ -691,6 +704,30 @@
         "lib/net8.0/Azure.Identity.xml",
         "lib/netstandard2.0/Azure.Identity.dll",
         "lib/netstandard2.0/Azure.Identity.xml"
+      ]
+    },
+    "Cronos/0.11.1": {
+      "sha512": "5Ug+giPQITSAdTp/METAsofRSSUi3I5p7t4dlcXnzUgUzwZb4HkOBcYfpHuPwAHrnKJjmyW8amVzLD6mfLpaBg==",
+      "type": "package",
+      "path": "cronos/0.11.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE",
+        "README.md",
+        "cronos.0.11.1.nupkg.sha512",
+        "cronos.nuspec",
+        "icon.png",
+        "lib/net40/Cronos.dll",
+        "lib/net40/Cronos.xml",
+        "lib/net45/Cronos.dll",
+        "lib/net45/Cronos.xml",
+        "lib/net6.0/Cronos.dll",
+        "lib/net6.0/Cronos.xml",
+        "lib/netstandard1.0/Cronos.dll",
+        "lib/netstandard1.0/Cronos.xml",
+        "lib/netstandard2.0/Cronos.dll",
+        "lib/netstandard2.0/Cronos.xml"
       ]
     },
     "Dapper/2.1.66": {
@@ -1442,6 +1479,7 @@
   },
   "projectFileDependencyGroups": {
     "net10.0": [
+      "Cronos >= 0.11.1",
       "Dapper >= 2.1.66",
       "Microsoft.AspNetCore.OpenApi >= 10.0.3",
       "Microsoft.Data.SqlClient >= 6.1.4",
@@ -1493,6 +1531,10 @@
       "net10.0": {
         "targetAlias": "net10.0",
         "dependencies": {
+          "Cronos": {
+            "target": "Package",
+            "version": "[0.11.1, )"
+          },
           "Dapper": {
             "target": "Package",
             "version": "[2.1.66, )"
