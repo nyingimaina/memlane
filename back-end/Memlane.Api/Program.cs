@@ -7,6 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Ensure the application runs on port 5237
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ListenAnyIP(5237);
+});
+
 // Add services to the container.
 builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
@@ -31,6 +37,9 @@ builder.Services.AddSingleton<IFilenameGenerator, SortableFilenameGenerator>();
 builder.Services.AddSingleton<IBackupProvider, SqlServerBackupProvider>();
 builder.Services.AddSingleton<IBackupProvider, MariaDbBackupProvider>();
 builder.Services.AddSingleton<IStorageProvider, LocalStorageProvider>();
+builder.Services.AddSingleton<IStorageProvider, FolderStorageProvider>();
+builder.Services.AddSingleton<IStorageProvider, S3StorageProvider>();
+builder.Services.AddSingleton<IStorageProviderFactory, StorageProviderFactory>();
 builder.Services.AddScoped<IJobOrchestrator, BackupJobOrchestrator>();
 builder.Services.AddHostedService<BackgroundJobService>();
 

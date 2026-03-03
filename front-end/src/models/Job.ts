@@ -28,7 +28,8 @@ export interface BackupJobConfiguration {
     dbProvider?: string;
     dbConnectionString?: string;
     sourceDirectory?: string;
-    targetDirectory?: string;
+    storageProvider?: string;
+    targetDestination?: string;
     enableCompression: boolean;
     archiveFileName?: string;
     skipIfNoChanges: boolean;

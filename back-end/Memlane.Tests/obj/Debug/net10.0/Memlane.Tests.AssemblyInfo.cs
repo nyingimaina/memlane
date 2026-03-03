@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Memlane.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f287aedbac74309998cafee804f82b1cb8b4ad3c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cad2c16c7ee368a0f193aa6b888e01e0687a8c60")]
 [assembly: System.Reflection.AssemblyProductAttribute("Memlane.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Memlane.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

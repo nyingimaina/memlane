@@ -134,3 +134,8 @@ D:\work\nyingi\code\Memlane\back-end\Memlane.Tests\obj\Debug\net10.0\refint\Meml
 D:\work\nyingi\code\Memlane\back-end\Memlane.Tests\obj\Debug\net10.0\Memlane.Tests.pdb
 D:\work\nyingi\code\Memlane\back-end\Memlane.Tests\obj\Debug\net10.0\Memlane.Tests.genruntimeconfig.cache
 D:\work\nyingi\code\Memlane\back-end\Memlane.Tests\obj\Debug\net10.0\ref\Memlane.Tests.dll
+D:\work\nyingi\code\Memlane\back-end\Memlane.Tests\bin\Debug\net10.0\Polly.dll
+D:\work\nyingi\code\Memlane\back-end\Memlane.Tests\bin\Debug\net10.0\Polly.Core.dll
+D:\work\nyingi\code\Memlane\back-end\Memlane.Tests\bin\Debug\net10.0\Castle.Core.dll
+D:\work\nyingi\code\Memlane\back-end\Memlane.Tests\bin\Debug\net10.0\Moq.dll
+D:\work\nyingi\code\Memlane\back-end\Memlane.Tests\obj\Debug\net10.0\Memlane.Tests.sourcelink.json

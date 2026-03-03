@@ -1,37 +1,37 @@
-# Implementation Plan: Web Dashboard Implementation
+# Implementation Plan: Web Dashboard & Core Integration (Full)
 
-## Phase 1: Frontend Scaffolding & Dependencies [checkpoint: 35fa89b]
+## Phase 1: Frontend & Backend Core Stabilized [checkpoint: 35fa89b]
+(Completed: Scaffolding, Infrastructure, Basic Layout)
 
-### [x] Task: Next.js Project Setup
-- [x] Implement: Initialize Next.js project with TypeScript and App Router
-- [x] Implement: Configure Vanilla CSS and basic globals
-- [x] Implement: Install dependencies (axios, @microsoft/signalr, zest suite)
+## Phase 2: Pipeline & Storage Implementation
 
-### [x] Task: Architecture & State Management
-- [x] Implement: Setup folder structure for Logic-Repository pattern
-- [x] Implement: Create basic repositories for Job API interaction
-- [x] Implement: Setup SignalR service wrapper
+### [ ] Task: Real Storage & Database Providers
+- [ ] Implement: `SqlServerBackupProvider` using `Microsoft.Data.SqlClient` (dynamic command generation)
+- [ ] Implement: `MariaDbBackupProvider` using `mysqldump` process execution
+- [ ] Implement: `S3StorageProvider` (Extensibility stub/interface)
+- [ ] Implement: `StorageProviderFactory` to resolve providers by type
 
-- [x] Task: Conductor - User Manual Verification 'Phase 1: Frontend Scaffolding & Dependencies' (Protocol in workflow.md) (35fa89b)
+### [ ] Task: Enhanced Orchestration Pipeline
+- [ ] Implement: Update `BackupJobOrchestrator` to support the full pipeline:
+    - [ ] DB Provider Execution -> Output to Temp
+    - [ ] Sync Engine (Hashing) -> Optional Skip
+    - [ ] Compression Utility -> Archive Creation
+    - [ ] Storage Provider -> Move/Copy to Final Destination
+- [ ] Implement: Comprehensive logging for each pipeline step
 
-## Phase 2: Core Layout & Navigation [checkpoint: 5f8cfab]
+- [ ] Task: Conductor - User Manual Verification 'Phase 2: Pipeline & Storage' (Protocol in workflow.md)
 
-### [x] Task: Main Layout Implementation
-- [x] Implement: Integrate `ZestResponsiveLayout`
-- [x] Implement: Implement `ZestSidekickMenu` for navigation
-- [x] Implement: Setup basic page routing (Dashboard, Jobs, Settings)
+## Phase 3: Full Dashboard & UI Completion
 
-- [x] Task: Conductor - User Manual Verification 'Phase 2: Core Layout & Navigation' (Protocol in workflow.md) (5f8cfab)
+### [ ] Task: Job Configuration & Management (No Placeholders)
+- [ ] Implement: Update `JobForm` with Storage Provider selection and Destination paths
+- [ ] Implement: Implement `HistoryPage` with a searchable table of previous job runs
+- [ ] Implement: Implement `SettingsPage` for global app configuration (e.g., default paths, S3 credentials)
+- [ ] Implement: Enhance `DashboardPage` with real-time summary cards (Total Jobs, Success Rate, Storage Used)
 
-## Phase 3: Dashboard & Monitoring [checkpoint: 3e3b680]
+### [ ] Task: Final Integration & E2E Verification
+- [ ] Implement: Full E2E test verifying a pipeline: SQL -> Sync -> Compress -> Local Storage
+- [ ] Implement: Verify Dark/Light mode consistency across all new components
+- [ ] Implement: Final build and cleanup of any remaining `console.log` or debug stubs
 
-### [x] Task: Job Monitoring Table (2282402)
-- [x] Implement: Create `JobsTable` using `ResponsiveTable`
-- [x] Implement: Integrate real-time status updates from SignalR
-- [x] Implement: Add `OverflowMenu` for job actions
-
-### [x] Task: Job Configuration UI
-- [x] Implement: Create forms for job creation/editing using `ZestTextbox` and `ZestButton`
-- [x] Implement: Final integration with backend API
-
-- [x] Task: Conductor - User Manual Verification 'Phase 3: Dashboard & Monitoring' (Protocol in workflow.md) (3e3b680)
+- [ ] Task: Conductor - User Manual Verification 'Phase 3: Final Integration' (Protocol in workflow.md)

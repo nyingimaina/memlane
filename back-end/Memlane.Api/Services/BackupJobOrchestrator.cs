@@ -21,20 +21,20 @@ namespace Memlane.Api.Services
     public class BackupJobOrchestrator : IJobOrchestrator
     {
         private readonly IEnumerable<IBackupProvider> _backupProviders;
-        private readonly IEnumerable<IStorageProvider> _storageProviders;
+        private readonly IStorageProviderFactory _storageProviderFactory;
         private readonly ISyncEngine _syncEngine;
         private readonly IHubContext<JobHub> _hubContext;
         private readonly ILogger<BackupJobOrchestrator> _logger;
 
         public BackupJobOrchestrator(
             IEnumerable<IBackupProvider> backupProviders,
-            IEnumerable<IStorageProvider> storageProviders,
+            IStorageProviderFactory storageProviderFactory,
             ISyncEngine syncEngine,
             IHubContext<JobHub> hubContext,
             ILogger<BackupJobOrchestrator> logger)
         {
             _backupProviders = backupProviders;
-            _storageProviders = storageProviders;
+            _storageProviderFactory = storageProviderFactory;
             _syncEngine = syncEngine;
             _hubContext = hubContext;
             _logger = logger;
@@ -53,62 +53,74 @@ namespace Memlane.Api.Services
                 throw new ArgumentException($"Failed to deserialize configuration for job {job.Id}.");
             }
 
-            _logger.LogInformation("Starting backup job {JobId}: {JobName}", job.Id, job.Name);
-            await SendUpdateAsync(job.Id, "Started", "Starting backup job orchestration...", 0);
+            _logger.LogInformation("Starting full pipeline for job {JobId}: {JobName}", job.Id, job.Name);
+            await SendUpdateAsync(job.Id, "Started", "Initializing backup pipeline...", 0);
 
-            // 1. File Synchronization (if applicable) - WE DO THIS FIRST TO DETECT CHANGES
-            SyncResult? syncResult = null;
-            if (!string.IsNullOrEmpty(config.SourceDirectory) && !string.IsNullOrEmpty(config.TargetDirectory))
-            {
-                await SendUpdateAsync(job.Id, "FileSync", "Starting file synchronization...", 10);
-                _logger.LogInformation("Starting file synchronization from {Source} to {Target}...", config.SourceDirectory, config.TargetDirectory);
-                syncResult = await _syncEngine.SyncAsync(config.SourceDirectory, config.TargetDirectory);
-                _logger.LogInformation("File synchronization complete. {FilesSynced} files synced.", syncResult.FilesSynced);
-                await SendUpdateAsync(job.Id, "FileSync", $"File synchronization complete. {syncResult.FilesSynced} files synced.", 40);
-            }
+            var tempDir = Path.Combine(Path.GetTempPath(), "Memlane_Pipeline_" + job.Id);
+            if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
+            Directory.CreateDirectory(tempDir);
 
-            // CHECK FOR CHANGES AND SKIP IF NECESSARY
-            if (config.SkipIfNoChanges && syncResult != null && !syncResult.ChangesDetected)
-            {
-                _logger.LogInformation("No changes detected for job {JobId}. Skipping database backup and compression.", job.Id);
-                await SendUpdateAsync(job.Id, "Skipped", "No changes detected. Skipping backup steps.", 100);
-                return JobExecutionResult.Skipped;
-            }
-
-            // 2. Database Backup (if applicable)
-            string? backupFilePath = null;
-            if (!string.IsNullOrEmpty(config.DbConnectionString) && !string.IsNullOrEmpty(config.DbProvider))
-            {
-                var provider = _backupProviders.FirstOrDefault(p => p.ProviderName.Equals(config.DbProvider, StringComparison.OrdinalIgnoreCase));
-                if (provider == null)
+            try {
+                // 1. Database Backup (Output to Temp)
+                string? dbBackupFile = null;
+                if (!string.IsNullOrEmpty(config.DbConnectionString) && !string.IsNullOrEmpty(config.DbProvider) && config.DbProvider != "None")
                 {
-                    throw new Exception($"Backup provider '{config.DbProvider}' not found.");
+                    var provider = _backupProviders.FirstOrDefault(p => p.ProviderName.Equals(config.DbProvider, StringComparison.OrdinalIgnoreCase));
+                    if (provider == null) throw new Exception($"Database provider '{config.DbProvider}' not found.");
+
+                    await SendUpdateAsync(job.Id, "DatabaseBackup", $"Backing up database using {provider.ProviderName}...", 10);
+                    dbBackupFile = await provider.CreateBackupAsync(config.DbConnectionString, tempDir);
+                    _logger.LogInformation("Database backup ready: {Path}", dbBackupFile);
                 }
 
-                await SendUpdateAsync(job.Id, "DatabaseBackup", $"Creating database backup using {provider.ProviderName}...", 50);
-                _logger.LogInformation("Creating database backup using {Provider}...", provider.ProviderName);
-                var tempDir = Path.Combine(Path.GetTempPath(), "Memlane_Temp_" + job.Id);
-                if (!Directory.Exists(tempDir)) Directory.CreateDirectory(tempDir);
-                
-                backupFilePath = await provider.CreateBackupAsync(config.DbConnectionString, tempDir);
-                _logger.LogInformation("Database backup created at {Path}", backupFilePath);
-                await SendUpdateAsync(job.Id, "DatabaseBackup", "Database backup complete.", 70);
-            }
+                // 2. File Synchronization / Hashing (Source to Temp)
+                SyncResult? syncResult = null;
+                if (!string.IsNullOrEmpty(config.SourceDirectory))
+                {
+                    await SendUpdateAsync(job.Id, "FileSync", "Checking for file changes...", 30);
+                    syncResult = await _syncEngine.SyncAsync(config.SourceDirectory, tempDir);
+                    _logger.LogInformation("Sync complete. Changes detected: {Changes}", syncResult.ChangesDetected);
+                }
 
-            // 3. Compression (if enabled)
-            if (config.EnableCompression && !string.IsNullOrEmpty(config.TargetDirectory) && !string.IsNullOrEmpty(config.ArchiveFileName))
-            {
-                var archivePath = Path.Combine(config.TargetDirectory, config.ArchiveFileName);
-                await SendUpdateAsync(job.Id, "Compression", $"Compressing backup to {config.ArchiveFileName}...", 80);
-                _logger.LogInformation("Compressing backup to {ArchivePath}...", archivePath);
-                await CompressionUtility.CompressAsync(config.TargetDirectory, archivePath);
-                _logger.LogInformation("Compression complete.");
-                await SendUpdateAsync(job.Id, "Compression", "Compression complete.", 95);
-            }
+                // 3. Skip Check (If no DB backup and no file changes)
+                bool hasChanges = (dbBackupFile != null) || (syncResult != null && syncResult.ChangesDetected);
+                if (config.SkipIfNoChanges && !hasChanges)
+                {
+                    _logger.LogInformation("No changes detected for job {JobId}. Pipeline halted.", job.Id);
+                    await SendUpdateAsync(job.Id, "Skipped", "No data changes detected. Skipping storage steps.", 100);
+                    return JobExecutionResult.Skipped;
+                }
 
-            await SendUpdateAsync(job.Id, "Completed", "Backup job finished successfully.", 100);
-            _logger.LogInformation("Backup job {JobId} finished successfully.", job.Id);
-            return JobExecutionResult.Completed;
+                // 4. Compression (Temp to Temp Archive)
+                string artifactPath = tempDir;
+                if (config.EnableCompression && !string.IsNullOrEmpty(config.ArchiveFileName))
+                {
+                    var archivePath = Path.Combine(Path.GetTempPath(), config.ArchiveFileName);
+                    await SendUpdateAsync(job.Id, "Compression", "Compressing artifacts...", 70);
+                    await CompressionUtility.CompressAsync(tempDir, archivePath);
+                    artifactPath = archivePath;
+                    _logger.LogInformation("Compression ready: {Path}", artifactPath);
+                }
+
+                // 5. Storage Provider (Resolved via Factory)
+                if (!string.IsNullOrEmpty(config.StorageProvider) && !string.IsNullOrEmpty(config.TargetDestination))
+                {
+                    var storage = _storageProviderFactory.GetProvider(config.StorageProvider);
+                    
+                    await SendUpdateAsync(job.Id, "Storage", $"Transferring to {storage.ProviderName}...", 90);
+                    await storage.SaveAsync(artifactPath, config.TargetDestination);
+                    _logger.LogInformation("Transfer to storage complete.");
+
+                    // If it was a compressed file in Temp, clean it up
+                    if (artifactPath != tempDir && File.Exists(artifactPath)) File.Delete(artifactPath);
+                }
+
+                await SendUpdateAsync(job.Id, "Completed", "Pipeline finished successfully.", 100);
+                return JobExecutionResult.Completed;
+
+            } finally {
+                if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
+            }
         }
 
         private async Task SendUpdateAsync(int jobId, string status, string message, int progress)
@@ -121,10 +133,11 @@ namespace Memlane.Api.Services
 
     public class BackupJobConfiguration
     {
-        public string? DbProvider { get; set; } // e.g., "SQL Server", "MariaDB"
+        public string? DbProvider { get; set; }
         public string? DbConnectionString { get; set; }
         public string? SourceDirectory { get; set; }
-        public string? TargetDirectory { get; set; }
+        public string? StorageProvider { get; set; } 
+        public string? TargetDestination { get; set; }
         public bool EnableCompression { get; set; }
         public string? ArchiveFileName { get; set; }
         public bool SkipIfNoChanges { get; set; } = true;

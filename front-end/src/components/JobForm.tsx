@@ -16,7 +16,7 @@ const JobForm: React.FC<JobFormProps> = ({ initialJob, onSubmit, onCancel }) => 
     const [config, setConfig] = useState<BackupJobConfiguration>(
         initialJob?.configurationJson 
             ? JSON.parse(initialJob.configurationJson) 
-            : { enableCompression: true, skipIfNoChanges: true, dbProvider: 'None' }
+            : { enableCompression: true, skipIfNoChanges: true, dbProvider: 'None', storageProvider: 'Folder' }
     );
 
     const handleSubmit = async () => {
@@ -43,17 +43,32 @@ const JobForm: React.FC<JobFormProps> = ({ initialJob, onSubmit, onCancel }) => 
                 />
             </div>
 
-            <div style={inputGroupStyle}>
-                <label style={labelStyle}>Database Provider</label>
-                <select 
-                    value={config.dbProvider} 
-                    onChange={(e) => setConfig({ ...config, dbProvider: e.target.value })}
-                    style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--foreground)' }}
-                >
-                    <option value="None">None (Files Only)</option>
-                    <option value="SQL Server">SQL Server</option>
-                    <option value="MariaDB">MariaDB</option>
-                </select>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div style={inputGroupStyle}>
+                    <label style={labelStyle}>Database Source</label>
+                    <select 
+                        value={config.dbProvider} 
+                        onChange={(e) => setConfig({ ...config, dbProvider: e.target.value })}
+                        style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--foreground)' }}
+                    >
+                        <option value="None">None (Files Only)</option>
+                        <option value="SQL Server">SQL Server</option>
+                        <option value="MariaDB">MariaDB</option>
+                    </select>
+                </div>
+
+                <div style={inputGroupStyle}>
+                    <label style={labelStyle}>Storage Destination</label>
+                    <select 
+                        value={config.storageProvider} 
+                        onChange={(e) => setConfig({ ...config, storageProvider: e.target.value })}
+                        style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--foreground)' }}
+                    >
+                        <option value="Folder">Local Folder (Testing)</option>
+                        <option value="Local">Local Disk (Direct)</option>
+                        <option value="S3">S3 Cloud</option>
+                    </select>
+                </div>
             </div>
 
             {config.dbProvider !== 'None' && (
@@ -70,7 +85,7 @@ const JobForm: React.FC<JobFormProps> = ({ initialJob, onSubmit, onCancel }) => 
             )}
 
             <div style={inputGroupStyle}>
-                <label style={labelStyle}>Source Directory (for files)</label>
+                <label style={labelStyle}>Source Folder (for local file sync)</label>
                 <ZestTextbox 
                     placeholder="C:\Data\Files"
                     value={config.sourceDirectory || ''}
@@ -81,17 +96,17 @@ const JobForm: React.FC<JobFormProps> = ({ initialJob, onSubmit, onCancel }) => 
             </div>
 
             <div style={inputGroupStyle}>
-                <label style={labelStyle}>Target Directory (backups will be stored here)</label>
+                <label style={labelStyle}>Target Destination Path</label>
                 <ZestTextbox 
-                    placeholder="D:\Backups"
-                    value={config.targetDirectory || ''}
+                    placeholder={config.storageProvider === 'S3' ? "my-bucket/backups" : "D:\Backups"}
+                    value={config.targetDestination || ''}
                     zest={{
-                        onTextChanged: (val) => setConfig({ ...config, targetDirectory: val })
+                        onTextChanged: (val) => setConfig({ ...config, targetDestination: val })
                     }}
                 />
             </div>
 
-            <div style={{ display: 'flex', gap: '2rem' }}>
+            <div style={{ display: 'flex', gap: '2rem', padding: '0.5rem', background: 'var(--info-bg)', borderRadius: '8px' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                     <input 
                         type="checkbox" 
@@ -107,7 +122,7 @@ const JobForm: React.FC<JobFormProps> = ({ initialJob, onSubmit, onCancel }) => 
                         checked={config.skipIfNoChanges} 
                         onChange={(e) => setConfig({ ...config, skipIfNoChanges: e.target.checked })}
                     />
-                    <span style={labelStyle}>Skip if no changes detected</span>
+                    <span style={labelStyle}>Skip if no changes</span>
                 </label>
             </div>
 
@@ -124,7 +139,7 @@ const JobForm: React.FC<JobFormProps> = ({ initialJob, onSubmit, onCancel }) => 
                 </div>
             )}
 
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
                 <ZestButton 
                     onClick={onCancel}
                     zest={{
@@ -141,7 +156,7 @@ const JobForm: React.FC<JobFormProps> = ({ initialJob, onSubmit, onCancel }) => 
                         semanticType: 'save'
                     }}
                 >
-                    {initialJob ? 'Update Job' : 'Create Job'}
+                    {initialJob ? 'Update Pipeline' : 'Create Pipeline'}
                 </ZestButton>
             </div>
         </div>
