@@ -21,6 +21,7 @@ namespace Memlane.Api.Models
         public string? ConfigurationJson { get; set; }
         public string? CronExpression { get; set; }
         public DateTime? NextRunAt { get; set; }
+        public string? IgnorePatterns { get; set; }
 
         // Calculated / Joined fields for Monitoring
         public int? LastRunId { get; set; }

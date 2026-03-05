@@ -75,6 +75,10 @@ namespace Memlane.Api.Infrastructure
             {
                 await connection.ExecuteAsync("ALTER TABLE Jobs ADD COLUMN ConfigurationJson TEXT");
             }
+            if (!columnNames.Contains("IgnorePatterns"))
+            {
+                await connection.ExecuteAsync("ALTER TABLE Jobs ADD COLUMN IgnorePatterns TEXT");
+            }
         }
 
         public async Task<IEnumerable<JobMetadata>> GetAllJobsAsync()
@@ -161,8 +165,8 @@ namespace Memlane.Api.Infrastructure
         {
             using var connection = _connectionFactory.CreateConnection();
             return await connection.QuerySingleAsync<int>(@"
-                INSERT INTO Jobs (Name, Type, Status, CreatedAt, ConfigurationJson, CronExpression, NextRunAt) 
-                VALUES (@Name, @Type, @Status, @CreatedAt, @ConfigurationJson, @CronExpression, @NextRunAt);
+                INSERT INTO Jobs (Name, Type, Status, CreatedAt, ConfigurationJson, CronExpression, NextRunAt, IgnorePatterns) 
+                VALUES (@Name, @Type, @Status, @CreatedAt, @ConfigurationJson, @CronExpression, @NextRunAt, @IgnorePatterns);
                 SELECT last_insert_rowid();",
                 job);
         }
@@ -188,7 +192,8 @@ namespace Memlane.Api.Infrastructure
                     Type = @Type, 
                     ConfigurationJson = @ConfigurationJson,
                     CronExpression = @CronExpression,
-                    NextRunAt = @NextRunAt
+                    NextRunAt = @NextRunAt,
+                    IgnorePatterns = @IgnorePatterns
                 WHERE Id = @Id", job);
         }
 

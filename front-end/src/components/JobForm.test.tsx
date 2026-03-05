@@ -49,19 +49,18 @@ describe('JobForm', () => {
     it('renders with initial values', () => {
         renderWithContext(<JobForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
         
+        expect(screen.getByText('Pipeline Name')).toBeInTheDocument();
         expect(screen.getByPlaceholderText('e.g., Production SQL Server')).toBeInTheDocument();
-        expect(screen.getByPlaceholderText('e.g., 0 0 * * * (Daily at midnight)')).toBeInTheDocument();
+        expect(screen.getByText('Automation & Retention')).toBeInTheDocument();
     });
 
-    it('updates cron expression and retention count', async () => {
+    it('updates job name and retention count', async () => {
         renderWithContext(<JobForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
         
         const nameInput = screen.getByPlaceholderText('e.g., Production SQL Server');
-        const cronInput = screen.getByPlaceholderText('e.g., 0 0 * * * (Daily at midnight)');
         const retentionInput = screen.getByDisplayValue('5');
 
         fireEvent.change(nameInput, { target: { value: 'Test Job' } });
-        fireEvent.change(cronInput, { target: { value: '0 12 * * *' } });
         fireEvent.change(retentionInput, { target: { value: '10' } });
 
         const submitButton = screen.getByTestId('zest-button-save');
@@ -69,8 +68,22 @@ describe('JobForm', () => {
 
         expect(mockOnSubmit).toHaveBeenCalledWith(expect.objectContaining({
             name: 'Test Job',
-            cronExpression: '0 12 * * *',
             configurationJson: expect.stringContaining('"retentionCount":10')
+        }));
+    });
+
+    it('updates cron schedule via CronBuilder', async () => {
+        renderWithContext(<JobForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
+        
+        // Find the cron select (it has 'Manual Only' as default)
+        const cronSelect = screen.getByDisplayValue('Manual Only');
+        fireEvent.change(cronSelect, { target: { value: '0 0 * * *' } });
+
+        const submitButton = screen.getByTestId('zest-button-save');
+        fireEvent.click(submitButton);
+
+        expect(mockOnSubmit).toHaveBeenCalledWith(expect.objectContaining({
+            cronExpression: '0 0 * * *'
         }));
     });
 });

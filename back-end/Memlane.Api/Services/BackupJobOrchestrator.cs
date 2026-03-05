@@ -1,6 +1,9 @@
+using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.SignalR;
 using Memlane.Api.Hubs;
+using Memlane.Api.Infrastructure;
 using Memlane.Api.Models;
 using Memlane.Api.Providers;
 
@@ -24,6 +27,8 @@ namespace Memlane.Api.Services
         private readonly IStorageProviderFactory _storageProviderFactory;
         private readonly ISyncEngine _syncEngine;
         private readonly IRetentionManager _retentionManager;
+        private readonly IFilenameGenerator _filenameGenerator;
+        private readonly IJobRepository _repository;
         private readonly IHubContext<JobHub> _hubContext;
         private readonly ILogger<BackupJobOrchestrator> _logger;
 
@@ -32,13 +37,17 @@ namespace Memlane.Api.Services
             IStorageProviderFactory storageProviderFactory,
             ISyncEngine syncEngine,
             IRetentionManager retentionManager,
+            IFilenameGenerator filenameGenerator,
+            IJobRepository repository,
             IHubContext<JobHub> hubContext,
             ILogger<BackupJobOrchestrator> logger)
         {
-            _backupProviders = backupProviders;
+            _backupProviders = backupProviders ?? Array.Empty<IBackupProvider>();
             _storageProviderFactory = storageProviderFactory;
             _syncEngine = syncEngine;
             _retentionManager = retentionManager;
+            _filenameGenerator = filenameGenerator;
+            _repository = repository;
             _hubContext = hubContext;
             _logger = logger;
         }
@@ -50,107 +59,221 @@ namespace Memlane.Api.Services
                 throw new ArgumentException($"Job {job.Id} has no configuration.");
             }
 
-            var config = JsonSerializer.Deserialize<BackupJobConfiguration>(job.ConfigurationJson);
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var config = JsonSerializer.Deserialize<BackupJobConfiguration>(job.ConfigurationJson, options);
+            
             if (config == null)
             {
                 throw new ArgumentException($"Failed to deserialize configuration for job {job.Id}.");
             }
 
-            _logger.LogInformation("Starting full pipeline for job {JobId}: {JobName}", job.Id, job.Name);
-            await SendUpdateAsync(job.Id, "Started", "Initializing backup pipeline...", 0);
+            string CleanPath(string? p) => p?.Trim(' ', '"', '\'') ?? "";
+            string sourceDir = CleanPath(config.SourceDirectory);
+            if (!string.IsNullOrEmpty(sourceDir) && !Path.IsPathRooted(sourceDir)) sourceDir = Path.GetFullPath(sourceDir);
 
-            var tempDir = Path.Combine(Path.GetTempPath(), "Memlane_Pipeline_" + job.Id);
-            if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
-            Directory.CreateDirectory(tempDir);
+            string targetDest = CleanPath(config.TargetDestination);
+            if (!string.IsNullOrEmpty(targetDest) && !Path.IsPathRooted(targetDest)) targetDest = Path.GetFullPath(targetDest);
 
+            // Create Run Record
+            var run = new JobRun {
+                JobId = job.Id,
+                StartTime = DateTime.UtcNow,
+                Status = JobStatus.InProgress,
+                Logs = ""
+            };
+            run.Id = await _repository.AddRunAsync(run);
+
+            var runLogger = new RunLogger(run, _repository, _hubContext, _logger);
+            await runLogger.LogAsync($"--- Starting Pipeline: {job.Name} ---");
+            await runLogger.LogAsync($"[Config] Source: '{sourceDir}'");
+            await runLogger.LogAsync($"[Config] Destination: '{targetDest}'");
+            await runLogger.LogAsync($"[Config] SkipIfNoChanges: {config.SkipIfNoChanges}");
+
+            var syncWorkspace = Path.Combine(Path.GetTempPath(), "Memlane", "Sync", job.Id.ToString());
+            var artifactWorkspace = Path.Combine(Path.GetTempPath(), "Memlane", "Artifacts", job.Id.ToString(), Guid.NewGuid().ToString().Substring(0, 8));
+
+            if (!Directory.Exists(syncWorkspace)) Directory.CreateDirectory(syncWorkspace);
+            if (!Directory.Exists(artifactWorkspace)) Directory.CreateDirectory(artifactWorkspace);
+            
             try {
-                // 1. Database Backup (Output to Temp)
+                // 1. Database Backup
                 string? dbBackupFile = null;
                 if (!string.IsNullOrEmpty(config.DbConnectionString) && !string.IsNullOrEmpty(config.DbProvider) && config.DbProvider != "None")
                 {
-                    var provider = _backupProviders.FirstOrDefault(p => p.ProviderName.Equals(config.DbProvider, StringComparison.OrdinalIgnoreCase));
+                    var provider = _backupProviders.FirstOrDefault(p => p != null && p.ProviderName != null && p.ProviderName.Equals(config.DbProvider, StringComparison.OrdinalIgnoreCase));
                     if (provider == null) throw new Exception($"Database provider '{config.DbProvider}' not found.");
 
-                    await SendUpdateAsync(job.Id, "DatabaseBackup", $"Backing up database using {provider.ProviderName}...", 10);
-                    dbBackupFile = await provider.CreateBackupAsync(config.DbConnectionString, tempDir);
-                    _logger.LogInformation("Database backup ready: {Path}", dbBackupFile);
+                    await runLogger.LogAsync($"[Database] Backing up '{config.DbProvider}' source...", 10);
+                    dbBackupFile = await provider.CreateBackupAsync(config.DbConnectionString, artifactWorkspace);
+                    await runLogger.LogAsync($"[Database] Successfully dumped to: {Path.GetFileName(dbBackupFile)}");
                 }
 
-                // 2. File Synchronization / Hashing (Source to Temp)
+                // 2. File Synchronization (Source -> Persistent Sync Workspace)
                 SyncResult? syncResult = null;
-                if (!string.IsNullOrEmpty(config.SourceDirectory))
+                if (!string.IsNullOrEmpty(sourceDir))
                 {
-                    await SendUpdateAsync(job.Id, "FileSync", "Checking for file changes...", 30);
-                    syncResult = await _syncEngine.SyncAsync(config.SourceDirectory, tempDir);
-                    _logger.LogInformation("Sync complete. Changes detected: {Changes}", syncResult.ChangesDetected);
+                    await runLogger.LogAsync($"[FileSync] Scanning source: {sourceDir}...", 30);
+                    syncResult = await _syncEngine.SyncAsync(sourceDir, syncWorkspace, job.IgnorePatterns, async (msg) => await runLogger.LogAsync(msg));
+                    await runLogger.LogAsync($"[FileSync] Scan results: {syncResult.TotalFilesFound} total files, {syncResult.FilesSynced} changed/new files.");
                 }
 
-                // 3. Skip Check (If no DB backup and no file changes)
+                // 3. Skip Check
                 bool hasChanges = (dbBackupFile != null) || (syncResult != null && syncResult.ChangesDetected);
                 if (hasChanges == false && config.SkipIfNoChanges)
                 {
-                    _logger.LogInformation("No changes detected for job {JobId}. Pipeline halted.", job.Id);
-                    await SendUpdateAsync(job.Id, "Skipped", "No data changes detected. Skipping storage steps.", 100);
+                    await runLogger.LogAsync(">>> RESULT: No changes detected. Pipeline skipped.", 100);
+                    run.Status = JobStatus.Skipped;
+                    run.EndTime = DateTime.UtcNow;
+                    await runLogger.UpdateFinalStatusAsync();
                     return JobExecutionResult.Skipped;
                 }
 
-                // 4. Compression (Temp to Temp Archive)
-                string artifactPath = tempDir;
-                if (config.EnableCompression && !string.IsNullOrEmpty(config.ArchiveFileName))
+                // 4. Artifact Assembly (Sync Workspace -> Artifact Workspace)
+                // We MUST copy files to the artifact workspace so they can be zipped/stored
+                if (!string.IsNullOrEmpty(sourceDir))
                 {
-                    var archivePath = Path.Combine(Path.GetTempPath(), config.ArchiveFileName);
-                    await SendUpdateAsync(job.Id, "Compression", "Compressing artifacts...", 70);
-                    await CompressionUtility.CompressAsync(tempDir, archivePath);
-                    artifactPath = archivePath;
-                    _logger.LogInformation("Compression ready: {Path}", artifactPath);
+                    await runLogger.LogAsync("[Pipeline] Assembling artifacts for storage...");
+                    CopyDirectory(syncWorkspace, artifactWorkspace);
                 }
 
-                // 5. Storage Provider (Resolved via Factory)
-                if (!string.IsNullOrEmpty(config.StorageProvider) && !string.IsNullOrEmpty(config.TargetDestination))
+                // 5. Filename Generation & Compression
+                string finalArtifactPath = artifactWorkspace;
+                string extension = config.EnableCompression ? ".zip" : "";
+                string fileName = _filenameGenerator.Generate(job.Name, extension);
+                
+                if (config.EnableCompression)
+                {
+                    var zipPath = Path.Combine(Path.GetTempPath(), fileName);
+                    await runLogger.LogAsync($"[Compression] Packaging {Directory.GetFiles(artifactWorkspace, "*", SearchOption.AllDirectories).Length} files into archive...", 70);
+                    await CompressionUtility.CompressAsync(artifactWorkspace, zipPath);
+                    finalArtifactPath = zipPath;
+                    await runLogger.LogAsync($"[Compression] Done. Archive size: {new FileInfo(finalArtifactPath).Length / 1024} KB");
+                }
+
+                // 6. Storage Provider
+                if (!string.IsNullOrEmpty(config.StorageProvider) && !string.IsNullOrEmpty(targetDest))
                 {
                     var storage = _storageProviderFactory.GetProvider(config.StorageProvider);
-                    
-                    await SendUpdateAsync(job.Id, "Storage", $"Transferring to {storage.ProviderName}...", 90);
-                    await storage.SaveAsync(artifactPath, config.TargetDestination);
-                    _logger.LogInformation("Transfer to storage complete.");
+                    var targetPath = Path.Combine(targetDest, fileName);
 
-                    // 6. Backup Rotation (Pruning)
+                    await runLogger.LogAsync($"[Storage] Sending to {storage.ProviderName} destination: {targetDest}...", 90);
+                    await storage.SaveAsync(finalArtifactPath, targetPath);
+                    await runLogger.LogAsync($"[Storage] Successfully saved as: {fileName}");
+
+                    // 7. Backup Rotation
                     if (config.RetentionCount > 0 && (config.StorageProvider == "Local" || config.StorageProvider == "Folder"))
                     {
-                        await SendUpdateAsync(job.Id, "Rotation", "Pruning old backups...", 95);
-                        await _retentionManager.RotateBackupsAsync(config.TargetDestination, config.RetentionCount);
+                        await runLogger.LogAsync($"[Rotation] Applying retention policy: Keep last {config.RetentionCount} backups...", 95);
+                        await _retentionManager.RotateBackupsAsync(targetDest, config.RetentionCount);
                     }
 
-                    // If it was a compressed file in Temp, clean it up
-                    if (artifactPath != tempDir && File.Exists(artifactPath)) File.Delete(artifactPath);
+                    if (config.EnableCompression && File.Exists(finalArtifactPath)) File.Delete(finalArtifactPath);
                 }
 
-                await SendUpdateAsync(job.Id, "Completed", "Pipeline finished successfully.", 100);
+                if (Directory.Exists(artifactWorkspace)) Directory.Delete(artifactWorkspace, true);
+
+                await runLogger.LogAsync(">>> RESULT: Pipeline finished successfully.", 100);
+                run.Status = JobStatus.Completed;
+                run.EndTime = DateTime.UtcNow;
+                await runLogger.UpdateFinalStatusAsync();
                 return JobExecutionResult.Completed;
 
-            } finally {
-                if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
+            } catch (Exception ex) {
+                await runLogger.LogAsync($">>> [CRITICAL FAILURE] {ex.Message}", 100);
+                run.Status = JobStatus.Failed;
+                run.ResultMessage = ex.Message;
+                run.EndTime = DateTime.UtcNow;
+                await runLogger.UpdateFinalStatusAsync();
+                return JobExecutionResult.Failed;
             }
         }
 
-        private async Task SendUpdateAsync(int jobId, string status, string message, int progress)
+        private void CopyDirectory(string sourceDir, string targetDir)
         {
-            var update = new JobStatusUpdate(jobId, status, message, progress);
-            await _hubContext.Clients.Group($"Job_{jobId}").SendAsync("ReceiveStatusUpdate", update);
-            await _hubContext.Clients.All.SendAsync("ReceiveGlobalStatusUpdate", update);
+            foreach (string dirPath in Directory.GetDirectories(sourceDir, "*", SearchOption.AllDirectories))
+            {
+                Directory.CreateDirectory(dirPath.Replace(sourceDir, targetDir));
+            }
+
+            foreach (string newPath in Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories))
+            {
+                File.Copy(newPath, newPath.Replace(sourceDir, targetDir), true);
+            }
+        }
+    }
+
+    internal class RunLogger
+    {
+        private readonly JobRun _run;
+        private readonly IJobRepository _repository;
+        private readonly IHubContext<JobHub> _hubContext;
+        private readonly ILogger _systemLogger;
+        private readonly StringBuilder _logBuffer = new();
+
+        public RunLogger(JobRun run, IJobRepository repository, IHubContext<JobHub> hubContext, ILogger systemLogger)
+        {
+            _run = run;
+            _repository = repository;
+            _hubContext = hubContext;
+            _systemLogger = systemLogger;
+        }
+
+        public async Task LogAsync(string message, int? progress = null)
+        {
+            var timestampedMessage = $"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}] {message}";
+            _logBuffer.AppendLine(timestampedMessage);
+            _systemLogger.LogInformation("Job {JobId} Run {RunId}: {Message}", _run.JobId, _run.Id, message);
+
+            _run.Logs = _logBuffer.ToString();
+            await _repository.UpdateRunAsync(_run);
+
+            var update = new JobStatusUpdate(_run.JobId, _run.Status.ToString(), message, progress ?? -1);
+            if (_hubContext != null) {
+                await _hubContext.Clients.Group($"Job_{_run.JobId}").SendAsync("ReceiveStatusUpdate", update);
+                await _hubContext.Clients.All.SendAsync("ReceiveGlobalStatusUpdate", update);
+            }
+        }
+
+        public async Task UpdateFinalStatusAsync()
+        {
+            _run.Logs = _logBuffer.ToString();
+            await _repository.UpdateRunAsync(_run);
+            
+            var update = new JobStatusUpdate(_run.JobId, _run.Status.ToString(), _run.ResultMessage ?? "Finished", 100);
+            if (_hubContext != null) {
+                await _hubContext.Clients.Group($"Job_{_run.JobId}").SendAsync("ReceiveStatusUpdate", update);
+                await _hubContext.Clients.All.SendAsync("ReceiveGlobalStatusUpdate", update);
+            }
         }
     }
 
     public class BackupJobConfiguration
     {
+        [JsonPropertyName("dbProvider")]
         public string? DbProvider { get; set; }
+        
+        [JsonPropertyName("dbConnectionString")]
         public string? DbConnectionString { get; set; }
+        
+        [JsonPropertyName("sourceDirectory")]
         public string? SourceDirectory { get; set; }
+        
+        [JsonPropertyName("storageProvider")]
         public string? StorageProvider { get; set; } 
+        
+        [JsonPropertyName("targetDestination")]
         public string? TargetDestination { get; set; }
+        
+        [JsonPropertyName("enableCompression")]
         public bool EnableCompression { get; set; }
+        
+        [JsonPropertyName("archiveFileName")]
         public string? ArchiveFileName { get; set; }
+        
+        [JsonPropertyName("skipIfNoChanges")]
         public bool SkipIfNoChanges { get; set; } = true;
+        
+        [JsonPropertyName("retentionCount")]
         public int RetentionCount { get; set; }
     }
 }

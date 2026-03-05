@@ -17,6 +17,7 @@ export interface JobMetadata {
     configurationJson?: string;
     cronExpression?: string;
     nextRunAt?: string;
+    ignorePatterns?: string;
 
     // Calculated / Joined fields for Monitoring
     lastRunId?: number;
