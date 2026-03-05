@@ -23,4 +23,4 @@
 - [x] Implement: Add multiline textarea to `JobForm.tsx` for `.memignore` style patterns.
 - [x] Implement: Update `FileHashSyncEngine.cs` to filter files using regex-based glob matching for ignore patterns.
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Monitoring' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Monitoring' (Checkpoint: 5fceced)
