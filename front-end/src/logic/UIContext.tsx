@@ -13,6 +13,9 @@ interface UIContextType {
     sidePane: SidePaneConfig;
     openSidePane: (content: ReactNode, title?: ReactNode, widthRems?: number) => void;
     closeSidePane: () => void;
+    tutorialTriggered: boolean;
+    triggerTutorial: () => void;
+    clearTutorialTrigger: () => void;
 }
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
@@ -22,6 +25,7 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         visible: false,
         content: null
     });
+    const [tutorialTriggered, setTutorialTriggered] = useState(false);
 
     const openSidePane = (content: ReactNode, title?: ReactNode, widthRems: number = 30) => {
         setSidePane({ visible: true, content, title, widthRems });
@@ -31,8 +35,11 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         setSidePane(prev => ({ ...prev, visible: false }));
     };
 
+    const triggerTutorial = () => setTutorialTriggered(true);
+    const clearTutorialTrigger = () => setTutorialTriggered(false);
+
     return (
-        <UIContext.Provider value={{ sidePane, openSidePane, closeSidePane }}>
+        <UIContext.Provider value={{ sidePane, openSidePane, closeSidePane, tutorialTriggered, triggerTutorial, clearTutorialTrigger }}>
             {children}
         </UIContext.Provider>
     );

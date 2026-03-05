@@ -5,17 +5,19 @@ import { ZestResponsiveLayout } from "jattac.libs.web.zest-responsive-layout";
 import Sidebar from "@/components/Sidebar";
 import ZestThemeProvider from "@/components/ZestThemeProvider";
 import { UIProvider, useUI } from "@/logic/UIContext";
+import GuidedTour from "@/components/GuidedTour";
 
 interface ClientLayoutProps {
     children: React.ReactNode;
 }
 
 const LayoutContent: React.FC<ClientLayoutProps> = ({ children }) => {
-    const { sidePane, closeSidePane } = useUI();
+    const { sidePane, closeSidePane, tutorialTriggered, clearTutorialTrigger } = useUI();
 
     return (
         <>
             <Sidebar />
+            <GuidedTour manualTrigger={tutorialTriggered} onComplete={clearTutorialTrigger} />
             <ZestResponsiveLayout 
                 sidePane={{
                     visible: sidePane.visible,

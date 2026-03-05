@@ -83,20 +83,27 @@ app.MapGet("/api/jobs/{id}", async (int id, IJobRepository repo) =>
     return job != null ? Results.Ok(job) : Results.NotFound();
 });
 
-app.MapPost("/api/jobs", async ([FromBody] JobMetadata job, IJobRepository repo) =>
+app.MapPost("/api/jobs", async ([FromBody] JobMetadata job, IJobRepository repo, ILogger<Program> logger) =>
 {
-    job.CreatedAt = DateTime.UtcNow;
-    job.Status = JobStatus.Pending;
-    
-    if (!string.IsNullOrEmpty(job.CronExpression))
-    {
-        var cron = CronExpression.Parse(job.CronExpression);
-        job.NextRunAt = cron.GetNextOccurrence(DateTime.UtcNow);
-    }
+    try {
+        logger.LogInformation("Creating job: {JobName}", job.Name);
+        job.CreatedAt = DateTime.UtcNow;
+        job.Status = JobStatus.Pending;
+        
+        if (!string.IsNullOrEmpty(job.CronExpression))
+        {
+            var cron = CronExpression.Parse(job.CronExpression);
+            job.NextRunAt = cron.GetNextOccurrence(DateTime.UtcNow);
+        }
 
-    var id = await repo.AddJobAsync(job);
-    job.Id = id;
-    return Results.Created($"/api/jobs/{id}", job);
+        var id = await repo.AddJobAsync(job);
+        job.Id = id;
+        logger.LogInformation("Job created successfully with ID: {Id}", id);
+        return Results.Created($"/api/jobs/{id}", job);
+    } catch (Exception ex) {
+        logger.LogError(ex, "Error creating job: {Message}", ex.Message);
+        return Results.Problem(ex.Message);
+    }
 });
 
 app.MapPut("/api/jobs/{id}", async (int id, [FromBody] JobMetadata job, IJobRepository repo) =>
@@ -126,6 +133,18 @@ app.MapPost("/api/jobs/{id}/trigger", async (int id, IJobRepository repo) =>
 {
     await repo.UpdateJobStatusAsync(id, JobStatus.Pending);
     return Results.Accepted();
+});
+
+// History API Endpoints
+app.MapGet("/api/jobs/{jobId}/runs", async (int jobId, IJobRepository repo) =>
+{
+    return Results.Ok(await repo.GetRunsByJobIdAsync(jobId));
+});
+
+app.MapGet("/api/runs/{id}", async (int id, IJobRepository repo) =>
+{
+    var run = await repo.GetRunByIdAsync(id);
+    return run != null ? Results.Ok(run) : Results.NotFound();
 });
 
 app.Run();

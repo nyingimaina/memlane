@@ -60,7 +60,7 @@ namespace Memlane.Api.Services
             _logger.LogInformation("Background Job Service stopping...");
         }
 
-        private async Task ProcessJobAsync(JobMetadata job, IJobRepository repository, CancellationToken stoppingToken)
+        internal async Task ProcessJobAsync(JobMetadata job, IJobRepository repository, CancellationToken stoppingToken)
         {
             _logger.LogInformation("Processing job {JobId}: {JobName}", job.Id, job.Name);
 

@@ -2,14 +2,37 @@
 
 import React from 'react';
 import { useJobLogic } from '@/logic/useJobLogic';
+import { useUI } from '@/logic/UIContext';
 import JobsTable from '@/components/JobsTable';
-import { JobStatus } from '@/models/Job';
+import JobHistoryList from '@/components/JobHistoryList';
+import RunLogViewer from '@/components/RunLogViewer';
+import { JobMetadata, JobRun, JobStatus } from '@/models/Job';
 
 export default function HistoryPage() {
   const { jobs, isLoading, error, triggerJob } = useJobLogic();
+  const { openSidePane } = useUI();
 
-  // Filter for completed, failed, or skipped jobs
-  const historyJobs = jobs.filter(j => j.status !== JobStatus.Pending);
+  // Filter for jobs that have been run at least once
+  const historyJobs = jobs.filter(j => j.lastRunAt !== null);
+
+  const handleShowHistory = (job: JobMetadata) => {
+    openSidePane(
+        <JobHistoryList 
+            jobId={job.id} 
+            onSelectRun={(run) => handleShowRunDetail(run, job)} 
+        />,
+        `History: ${job.name}`,
+        35
+    );
+  };
+
+  const handleShowRunDetail = (run: JobRun, job: JobMetadata) => {
+    openSidePane(
+        <RunLogViewer run={run} />,
+        `Log: ${job.name} (Run #${run.id})`,
+        50
+    );
+  };
 
   return (
     <div style={{ padding: '2rem' }}>
@@ -36,6 +59,7 @@ export default function HistoryPage() {
                     onTrigger={triggerJob}
                     onEdit={() => {}} // No edit in history
                     onDelete={() => {}} // No delete in history
+                    onShowHistory={handleShowHistory}
                 />
             ) : (
                 <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--secondary)' }}>

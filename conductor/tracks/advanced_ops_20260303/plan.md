@@ -2,17 +2,30 @@
 
 ## Phase 1: Scheduling & Job Management
 
-### [~] Task: Cron-based Scheduling
-- [ ] Implement: Add `CronExpression` and `NextRunAt` fields to `JobMetadata` and SQLite schema
-- [ ] Implement: Update `BackgroundJobService` to use `Cronos` for scheduling
-- [ ] Implement: Update `JobForm` to include a validated Cron expression field
+### [x] Task: Cron-based Scheduling (fd7617b)
+- [x] Implement: Add `CronExpression` and `NextRunAt` fields to `JobMetadata` and SQLite schema
+- [x] Implement: Update `BackgroundJobService` to use `Cronos` for scheduling
+- [x] Implement: Update `JobForm` to include a validated Cron expression field
 
-### [~] Task: Backup Rotation Logic
-- [ ] Implement: Add `RetentionCount` to `BackupJobConfiguration`
-- [ ] Implement: Create `RetentionManager` to prune old files in `LocalStorageProvider` and `FolderStorageProvider`
-- [ ] Implement: Integrate rotation step into the end of the `BackupJobOrchestrator` pipeline
+### [x] Task: Backup Rotation Logic (fd7617b)
+- [x] Implement: Add `RetentionCount` to `BackupJobConfiguration`
+- [x] Implement: Create `RetentionManager` to prune old files in `LocalStorageProvider` and `FolderStorageProvider`
+- [x] Implement: Integrate rotation step into the end of the `BackupJobOrchestrator` pipeline
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Scheduling & Rotation' (Protocol in workflow.md)
+## Phase 1.5: Onboarding & User Tutorials
+
+### [ ] Task: Guided Tour Infrastructure
+- [ ] Implement: Install `react-joyride` dependency
+- [ ] Implement: Create `TutorialRegistry.ts` for centralized step definitions
+- [ ] Implement: Create `GuidedTour.tsx` wrapper and `TutorialIcon.tsx` component
+- [ ] Implement: Add stable CSS selectors/IDs to `Dashboard` and `JobForm` for targeting
+
+### [ ] Task: Implement Tours
+- [ ] Implement: Dashboard tour (Job overview, Status, Manual Trigger)
+- [ ] Implement: Job Configuration tour (Name, Schedule, Rotation, Storage)
+- [ ] Implement: On-demand launch via Tutorial Icon on each screen
+
+- [ ] Task: Conductor - User Manual Verification 'Phase 1.5: Onboarding' (Protocol in workflow.md)
 
 ## Phase 2: Deployment & Service Support
 

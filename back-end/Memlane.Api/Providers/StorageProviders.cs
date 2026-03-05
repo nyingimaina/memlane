@@ -41,6 +41,7 @@ namespace Memlane.Api.Providers
 
         public async Task SaveAsync(string sourcePath, string targetPath)
         {
+            // targetPath is expected to be the FULL file path including name
             var targetDir = Path.GetDirectoryName(targetPath);
             if (targetDir != null && !Directory.Exists(targetDir))
             {
@@ -70,15 +71,14 @@ namespace Memlane.Api.Providers
 
         public async Task SaveAsync(string sourcePath, string targetPath)
         {
-            // Similar to Local, but specifically for copying artifacts to a target folder
-            var destination = Path.Combine(targetPath, Path.GetFileName(sourcePath));
-            var targetDir = Path.GetDirectoryName(destination);
+            // Standardize behavior: targetPath is the final destination file path
+            var targetDir = Path.GetDirectoryName(targetPath);
             if (targetDir != null && !Directory.Exists(targetDir))
             {
                 Directory.CreateDirectory(targetDir);
             }
 
-            File.Copy(sourcePath, destination, true);
+            File.Copy(sourcePath, targetPath, true);
             await Task.CompletedTask;
         }
 

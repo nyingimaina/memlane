@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { JobMetadata, JobStatus } from '@/models/Job';
+import { JobMetadata, JobStatus, JobRun } from '@/models/Job';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -30,5 +30,15 @@ export const JobRepository = {
 
     trigger: async (id: number): Promise<void> => {
         await axios.post(`${API_URL}/jobs/${id}/trigger`);
+    },
+
+    getRuns: async (jobId: number): Promise<JobRun[]> => {
+        const response = await axios.get(`${API_URL}/jobs/${jobId}/runs`);
+        return response.data;
+    },
+
+    getRunById: async (runId: number): Promise<JobRun> => {
+        const response = await axios.get(`${API_URL}/runs/${runId}`);
+        return response.data;
     }
 };

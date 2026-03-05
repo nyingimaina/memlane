@@ -15,9 +15,17 @@ The dashboard will follow a **Corporate & Precise** design philosophy.
 
 ## User Experience (UX) Principles
 Memlane's UX is built on three core pillars:
-- **Speed & Efficiency:** Minimize the steps required to configure a new backup job. Provide sensible defaults and rapid job execution.
+- **Speed & Efficiency:** Minimize the steps required to configure a new backup job. Provide sensible defaults and rapid job execution. **NEW:** Prioritize interactive components (pickers, dropdowns, toggles) over raw text input wherever possible to minimize keyboard entry.
 - **Trust & Visibility:** Users must always know the state of their data. Provide real-time status indicators and a comprehensive audit log for every action taken by the system.
-- **Simplicity & Automation:** Abstract complex operations (like multi-step file synchronization and database backups) behind intuitive toggles, while allowing advanced users to fine-tune configurations.
+- **Simplicity & Automation:** Abstract complex operations (like multi-step file synchronization and database backups) behind intuitive toggles, while allowing advanced users to fine-tune configurations. **NEW:** Follow strict DRY principles in UI development; consolidate identical configuration sections into reusable sub-components.
+
+## Engineering Standards (UI)
+- **Component Modularity:** Large forms (like `JobForm`) must be decomposed into logical, reusable sub-components (e.g., `JobTypeToggle`, `StorageConfig`, `ScheduleConfig`).
+- **Input Minimization:** Any field requiring a file or directory path should ideally provide a picker or at least a highly-validated, user-friendly input mechanism.
+- **Visual Consistency:** Rigorously adhere to the `jattac.libs.web.zest-*` library standards.
+- **Action Feedback:** Always utilize `ZestButton`'s built-in capability to report action results. Async click handlers should throw exceptions on failure to trigger the button's visual "failed" state, and return successfully to indicate "success." This provides immediate, premium UX feedback.
+
+
 
 ## Error Handling & Resilience
 - **Graceful Recovery:** For transient errors (e.g., network blips during a cloud upload), the system should attempt a series of retries before alerting the user.

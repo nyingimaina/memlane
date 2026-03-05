@@ -5,9 +5,11 @@ import { useJobLogic } from '@/logic/useJobLogic';
 import { useUI } from '@/logic/UIContext';
 import JobsTable from '@/components/JobsTable';
 import JobForm from '@/components/JobForm';
+import JobHistoryList from '@/components/JobHistoryList';
+import RunLogViewer from '@/components/RunLogViewer';
 import ZestButton from 'jattac.libs.web.zest-button';
 import { FaPlus } from 'react-icons/fa6';
-import { JobMetadata } from '@/models/Job';
+import { JobMetadata, JobRun } from '@/models/Job';
 import { JobRepository } from '@/repositories/JobRepository';
 
 export default function JobsPage() {
@@ -25,8 +27,19 @@ export default function JobsPage() {
       await fetchJobs();
     } catch (err) {
       console.error("Failed to save job:", err);
+      throw err; // For ZestButton feedback
     }
   }, [closeSidePane, fetchJobs]);
+
+  const handleTrigger = async (id: number) => {
+    try {
+        await JobRepository.trigger(id);
+        await fetchJobs();
+    } catch (err) {
+        console.error("Failed to trigger job:", err);
+        throw err; // For ZestButton feedback
+    }
+  };
 
   const handleCreateNew = () => {
     openSidePane(
@@ -46,6 +59,25 @@ export default function JobsPage() {
         onCancel={closeSidePane}
       />,
       `Edit: ${job.name}`
+    );
+  };
+
+  const handleShowHistory = (job: JobMetadata) => {
+    openSidePane(
+        <JobHistoryList 
+            jobId={job.id} 
+            onSelectRun={(run) => handleShowRunDetail(run, job)} 
+        />,
+        `History: ${job.name}`,
+        35
+    );
+  };
+
+  const handleShowRunDetail = (run: JobRun, job: JobMetadata) => {
+    openSidePane(
+        <RunLogViewer run={run} />,
+        `Log: ${job.name} (Run #${run.id})`,
+        50
     );
   };
 
@@ -94,9 +126,10 @@ export default function JobsPage() {
       ) : (
         <JobsTable 
           jobs={jobs} 
-          onTrigger={triggerJob}
+          onTrigger={handleTrigger}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onShowHistory={handleShowHistory}
         />
       )}
     </div>

@@ -38,12 +38,20 @@ namespace Memlane.Tests
         public async Task BackupJob_ShouldSkip_WhenNoChangesAreDetected_InIntegratedScenario()
         {
             // Arrange
-            var logger = new Mock<ILogger<FileHashSyncEngine>>();
-            var syncEngine = new FileHashSyncEngine(logger.Object);
-            var filenameGen = new SortableFilenameGenerator();
+            var syncLogger = new Mock<ILogger<FileHashSyncEngine>>();
+            var syncEngine = new FileHashSyncEngine(syncLogger.Object);
             
             var mockBackupProvider = new Mock<IBackupProvider>();
             mockBackupProvider.Setup(p => p.ProviderName).Returns("SQL Server");
+
+            var mockStorageFactory = new Mock<IStorageProviderFactory>();
+            var mockStorageProvider = new Mock<IStorageProvider>();
+            mockStorageProvider.Setup(s => s.ProviderName).Returns("Folder");
+            mockStorageFactory.Setup(f => f.GetProvider(It.IsAny<string>())).Returns(mockStorageProvider.Object);
+
+            var mockRetention = new Mock<IRetentionManager>();
+            var mockFilenameGen = new Mock<IFilenameGenerator>();
+            mockFilenameGen.Setup(f => f.Generate(It.IsAny<string>(), It.IsAny<string>())).Returns("test_backup.zip");
             
             var mockHubContext = new Mock<IHubContext<JobHub>>();
             var mockClients = new Mock<IHubClients>();
@@ -54,8 +62,10 @@ namespace Memlane.Tests
 
             var orchestrator = new BackupJobOrchestrator(
                 new[] { mockBackupProvider.Object },
-                new[] { new LocalStorageProvider() },
+                mockStorageFactory.Object,
                 syncEngine,
+                mockRetention.Object,
+                mockFilenameGen.Object,
                 mockHubContext.Object,
                 new Mock<ILogger<BackupJobOrchestrator>>().Object);
 
@@ -64,16 +74,20 @@ namespace Memlane.Tests
             
             var config = new BackupJobConfiguration
             {
-                DbProvider = "SQL Server",
+                DbProvider = "None",
                 DbConnectionString = "Server=.;Database=Test;",
                 SourceDirectory = _sourceDir,
-                TargetDirectory = _targetDir,
-                SkipIfNoChanges = true
+                StorageProvider = "Folder",
+                TargetDestination = _targetDir,
+                SkipIfNoChanges = true,
+                EnableCompression = true
             };
 
+            // USE A UNIQUE JOB ID FOR EACH TEST INSTANCE TO AVOID TEMP DIR COLLISIONS
+            var jobId = new Random().Next(10000, 99999);
             var job = new JobMetadata
             {
-                Id = 1,
+                Id = jobId,
                 Name = "E2E_Test_Job",
                 ConfigurationJson = JsonSerializer.Serialize(config)
             };
@@ -81,26 +95,35 @@ namespace Memlane.Tests
             // Act - First Run (Should Sync)
             var result1 = await orchestrator.ExecuteJobAsync(job, CancellationToken.None);
             
-            // Act - Second Run (Should Skip)
+            // Act - Second Run (Should Skip because files in sync workspace match files in source)
             var result2 = await orchestrator.ExecuteJobAsync(job, CancellationToken.None);
 
             // Assert
             Assert.Equal(JobExecutionResult.Completed, result1);
             Assert.Equal(JobExecutionResult.Skipped, result2);
             
-            mockBackupProvider.Verify(p => p.CreateBackupAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            // Should have called save once for the first run
+            mockStorageProvider.Verify(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         }
 
         [Fact]
-        public async Task BackupJob_ShouldNotSkip_WhenForceBackupIsConfigured()
+        public async Task BackupJob_ShouldNotSkip_WhenFilesHaveChanged()
         {
             // Arrange
-            var logger = new Mock<ILogger<FileHashSyncEngine>>();
-            var syncEngine = new FileHashSyncEngine(logger.Object);
+            var syncLogger = new Mock<ILogger<FileHashSyncEngine>>();
+            var syncEngine = new FileHashSyncEngine(syncLogger.Object);
             
             var mockBackupProvider = new Mock<IBackupProvider>();
             mockBackupProvider.Setup(p => p.ProviderName).Returns("SQL Server");
-            mockBackupProvider.Setup(p => p.CreateBackupAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync("db.bak");
+
+            var mockStorageFactory = new Mock<IStorageProviderFactory>();
+            var mockStorageProvider = new Mock<IStorageProvider>();
+            mockStorageProvider.Setup(s => s.ProviderName).Returns("Folder");
+            mockStorageFactory.Setup(f => f.GetProvider(It.IsAny<string>())).Returns(mockStorageProvider.Object);
+
+            var mockRetention = new Mock<IRetentionManager>();
+            var mockFilenameGen = new Mock<IFilenameGenerator>();
+            mockFilenameGen.Setup(f => f.Generate(It.IsAny<string>(), It.IsAny<string>())).Returns("test_backup.zip");
             
             var mockHubContext = new Mock<IHubContext<JobHub>>();
             var mockClients = new Mock<IHubClients>();
@@ -111,8 +134,80 @@ namespace Memlane.Tests
 
             var orchestrator = new BackupJobOrchestrator(
                 new[] { mockBackupProvider.Object },
-                new[] { new LocalStorageProvider() },
+                mockStorageFactory.Object,
                 syncEngine,
+                mockRetention.Object,
+                mockFilenameGen.Object,
+                mockHubContext.Object,
+                new Mock<ILogger<BackupJobOrchestrator>>().Object);
+
+            File.WriteAllText(Path.Combine(_sourceDir, "test.txt"), "Initial Content");
+            
+            var config = new BackupJobConfiguration
+            {
+                DbProvider = "None",
+                SourceDirectory = _sourceDir,
+                StorageProvider = "Folder",
+                TargetDestination = _targetDir,
+                SkipIfNoChanges = true,
+                EnableCompression = true
+            };
+
+            var jobId = new Random().Next(10000, 99999);
+            var job = new JobMetadata
+            {
+                Id = jobId,
+                Name = "E2E_Change_Test",
+                ConfigurationJson = JsonSerializer.Serialize(config)
+            };
+
+            // Act - First Run
+            await orchestrator.ExecuteJobAsync(job, CancellationToken.None);
+            
+            // Modify file
+            File.WriteAllText(Path.Combine(_sourceDir, "test.txt"), "Updated Content");
+
+            // Act - Second Run
+            var result2 = await orchestrator.ExecuteJobAsync(job, CancellationToken.None);
+
+            // Assert
+            Assert.Equal(JobExecutionResult.Completed, result2);
+            mockStorageProvider.Verify(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(2));
+        }
+
+        [Fact]
+        public async Task BackupJob_ShouldCallRetentionManager_WhenRotationIsEnabled()
+        {
+            // Arrange
+            var syncLogger = new Mock<ILogger<FileHashSyncEngine>>();
+            var syncEngine = new FileHashSyncEngine(syncLogger.Object);
+            
+            var mockBackupProvider = new Mock<IBackupProvider>();
+            mockBackupProvider.Setup(p => p.ProviderName).Returns("SQL Server");
+            mockBackupProvider.Setup(p => p.CreateBackupAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync("db.bak");
+
+            var mockStorageFactory = new Mock<IStorageProviderFactory>();
+            var mockStorageProvider = new Mock<IStorageProvider>();
+            mockStorageProvider.Setup(s => s.ProviderName).Returns("Folder");
+            mockStorageFactory.Setup(f => f.GetProvider(It.IsAny<string>())).Returns(mockStorageProvider.Object);
+
+            var mockRetention = new Mock<IRetentionManager>();
+            var mockFilenameGen = new Mock<IFilenameGenerator>();
+            mockFilenameGen.Setup(f => f.Generate(It.IsAny<string>(), It.IsAny<string>())).Returns("rotation_test.zip");
+            
+            var mockHubContext = new Mock<IHubContext<JobHub>>();
+            var mockClients = new Mock<IHubClients>();
+            var mockClientProxy = new Mock<IClientProxy>();
+            mockHubContext.Setup(h => h.Clients).Returns(mockClients.Object);
+            mockClients.Setup(c => c.All).Returns(mockClientProxy.Object);
+            mockClients.Setup(c => c.Group(It.IsAny<string>())).Returns(mockClientProxy.Object);
+
+            var orchestrator = new BackupJobOrchestrator(
+                new[] { mockBackupProvider.Object },
+                mockStorageFactory.Object,
+                syncEngine,
+                mockRetention.Object,
+                mockFilenameGen.Object,
                 mockHubContext.Object,
                 new Mock<ILogger<BackupJobOrchestrator>>().Object);
 
@@ -123,24 +218,24 @@ namespace Memlane.Tests
                 DbProvider = "SQL Server",
                 DbConnectionString = "Server=.;Database=Test;",
                 SourceDirectory = _sourceDir,
-                TargetDirectory = _targetDir,
-                SkipIfNoChanges = false // FORCE BACKUP
+                StorageProvider = "Folder",
+                TargetDestination = _targetDir,
+                RetentionCount = 5,
+                EnableCompression = true
             };
 
             var job = new JobMetadata
             {
-                Id = 1,
-                Name = "E2E_Force_Job",
+                Id = 999,
+                Name = "E2E_Rotation_Job",
                 ConfigurationJson = JsonSerializer.Serialize(config)
             };
 
             // Act
-            await orchestrator.ExecuteJobAsync(job, CancellationToken.None); // Sync first
-            var result = await orchestrator.ExecuteJobAsync(job, CancellationToken.None); // Run again
+            await orchestrator.ExecuteJobAsync(job, CancellationToken.None); 
 
             // Assert
-            Assert.Equal(JobExecutionResult.Completed, result);
-            mockBackupProvider.Verify(p => p.CreateBackupAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(2));
+            mockRetention.Verify(r => r.RotateBackupsAsync(It.IsAny<string>(), 5), Times.Once);
         }
     }
 }

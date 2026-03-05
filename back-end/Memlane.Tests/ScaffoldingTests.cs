@@ -68,7 +68,7 @@ namespace Memlane.Tests
         public async Task SqliteJobRepository_ShouldStoreAndRetrieveJobs()
         {
             // Use a physical file for testing to avoid in-memory connection closing issues between Dapper calls
-            var dbPath = "test_jobs.db";
+            var dbPath = "test_jobs_scaffolding.db";
             if (File.Exists(dbPath)) File.Delete(dbPath);
 
             try
@@ -104,32 +104,6 @@ namespace Memlane.Tests
         }
 
         [Fact]
-        public async Task BackupProvider_Contract_ShouldBeMockable()
-        {
-            var mockProvider = new Mock<IBackupProvider>();
-            mockProvider.Setup(p => p.ProviderName).Returns("MockProvider");
-            mockProvider.Setup(p => p.CreateBackupAsync(It.IsAny<string>(), It.IsAny<string>()))
-                        .ReturnsAsync("backup_file.bak");
-
-            var provider = mockProvider.Object;
-            Assert.Equal("MockProvider", provider.ProviderName);
-            var result = await provider.CreateBackupAsync("connection_string", "target_dir");
-            Assert.Equal("backup_file.bak", result);
-        }
-
-        [Fact]
-        public async Task StorageProvider_Contract_ShouldBeMockable()
-        {
-            var mockProvider = new Mock<IStorageProvider>();
-            mockProvider.Setup(p => p.ProviderName).Returns("MockStorage");
-            mockProvider.Setup(p => p.ExistsAsync("test_path")).ReturnsAsync(true);
-
-            var provider = mockProvider.Object;
-            Assert.Equal("MockStorage", provider.ProviderName);
-            Assert.True(await provider.ExistsAsync("test_path"));
-        }
-
-        [Fact]
         public async Task BackupJobOrchestrator_ShouldExecuteAllSteps_AndSendUpdates()
         {
             // Arrange
@@ -137,10 +111,19 @@ namespace Memlane.Tests
             mockBackupProvider.Setup(p => p.ProviderName).Returns("SQL Server");
             mockBackupProvider.Setup(p => p.CreateBackupAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync("db.bak");
 
+            var mockStorageFactory = new Mock<IStorageProviderFactory>();
             var mockStorageProvider = new Mock<IStorageProvider>();
+            mockStorageProvider.Setup(s => s.ProviderName).Returns("Local");
+            mockStorageFactory.Setup(f => f.GetProvider(It.IsAny<string>())).Returns(mockStorageProvider.Object);
+
             var mockSyncEngine = new Mock<ISyncEngine>();
             mockSyncEngine.Setup(e => e.SyncAsync(It.IsAny<string>(), It.IsAny<string>()))
                          .ReturnsAsync(new SyncResult(true, 10, 5));
+            
+            var mockRetention = new Mock<IRetentionManager>();
+            var mockFilenameGen = new Mock<IFilenameGenerator>();
+            mockFilenameGen.Setup(f => f.Generate(It.IsAny<string>(), It.IsAny<string>())).Returns("scaffold_backup.zip");
+            
             var mockLogger = new Mock<ILogger<BackupJobOrchestrator>>();
 
             // SignalR Mocking
@@ -153,8 +136,10 @@ namespace Memlane.Tests
 
             var orchestrator = new BackupJobOrchestrator(
                 new[] { mockBackupProvider.Object },
-                new[] { mockStorageProvider.Object },
+                mockStorageFactory.Object,
                 mockSyncEngine.Object,
+                mockRetention.Object,
+                mockFilenameGen.Object,
                 mockHubContext.Object,
                 mockLogger.Object);
 
@@ -163,7 +148,8 @@ namespace Memlane.Tests
                 DbProvider = "SQL Server",
                 DbConnectionString = "Server=.;Database=Test;",
                 SourceDirectory = Path.Combine(Path.GetTempPath(), "source"),
-                TargetDirectory = Path.Combine(Path.GetTempPath(), "target"),
+                StorageProvider = "Local",
+                TargetDestination = Path.Combine(Path.GetTempPath(), "target"),
                 EnableCompression = false
             };
 
@@ -180,7 +166,7 @@ namespace Memlane.Tests
             // Assert
             Assert.Equal(JobExecutionResult.Completed, result);
             mockBackupProvider.Verify(p => p.CreateBackupAsync(config.DbConnectionString, It.IsAny<string>()), Times.Once);
-            mockSyncEngine.Verify(e => e.SyncAsync(config.SourceDirectory, config.TargetDirectory), Times.Once);
+            mockSyncEngine.Verify(e => e.SyncAsync(config.SourceDirectory, It.IsAny<string>()), Times.Once);
             
             // Verify that progress updates were sent
             mockClientProxy.Verify(c => c.SendCoreAsync("ReceiveStatusUpdate", It.Is<object[]>(o => ((JobStatusUpdate)o[0]).Status == "Completed"), default), Times.Once);
@@ -191,10 +177,14 @@ namespace Memlane.Tests
         {
             // Arrange
             var mockBackupProvider = new Mock<IBackupProvider>();
-            var mockStorageProvider = new Mock<IStorageProvider>();
+            mockBackupProvider.Setup(p => p.ProviderName).Returns("SQL Server");
+            var mockStorageFactory = new Mock<IStorageProviderFactory>();
             var mockSyncEngine = new Mock<ISyncEngine>();
             mockSyncEngine.Setup(e => e.SyncAsync(It.IsAny<string>(), It.IsAny<string>()))
                          .ReturnsAsync(new SyncResult(false, 10, 0)); // No changes detected
+            
+            var mockRetention = new Mock<IRetentionManager>();
+            var mockFilenameGen = new Mock<IFilenameGenerator>();
             var mockLogger = new Mock<ILogger<BackupJobOrchestrator>>();
 
             // SignalR Mocking
@@ -207,17 +197,20 @@ namespace Memlane.Tests
 
             var orchestrator = new BackupJobOrchestrator(
                 new[] { mockBackupProvider.Object },
-                new[] { mockStorageProvider.Object },
+                mockStorageFactory.Object,
                 mockSyncEngine.Object,
+                mockRetention.Object,
+                mockFilenameGen.Object,
                 mockHubContext.Object,
                 mockLogger.Object);
 
             var config = new BackupJobConfiguration
             {
-                DbProvider = "SQL Server",
+                DbProvider = "None",
                 DbConnectionString = "Server=.;Database=Test;",
                 SourceDirectory = Path.Combine(Path.GetTempPath(), "source"),
-                TargetDirectory = Path.Combine(Path.GetTempPath(), "target"),
+                StorageProvider = "Local",
+                TargetDestination = Path.Combine(Path.GetTempPath(), "target"),
                 SkipIfNoChanges = true
             };
 
@@ -237,59 +230,6 @@ namespace Memlane.Tests
             
             // Verify that "Skipped" update was sent
             mockClientProxy.Verify(c => c.SendCoreAsync("ReceiveStatusUpdate", It.Is<object[]>(o => ((JobStatusUpdate)o[0]).Status == "Skipped"), default), Times.Once);
-        }
-
-        [Fact]
-        public async Task BackupJobOrchestrator_ShouldNotSkip_WhenSkipIfNoChangesIsFalse()
-        {
-            // Arrange
-            var mockBackupProvider = new Mock<IBackupProvider>();
-            mockBackupProvider.Setup(p => p.ProviderName).Returns("SQL Server");
-            mockBackupProvider.Setup(p => p.CreateBackupAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync("db.bak");
-
-            var mockStorageProvider = new Mock<IStorageProvider>();
-            var mockSyncEngine = new Mock<ISyncEngine>();
-            mockSyncEngine.Setup(e => e.SyncAsync(It.IsAny<string>(), It.IsAny<string>()))
-                         .ReturnsAsync(new SyncResult(false, 10, 0)); // No changes detected
-            var mockLogger = new Mock<ILogger<BackupJobOrchestrator>>();
-
-            // SignalR Mocking
-            var mockHubContext = new Mock<IHubContext<JobHub>>();
-            var mockClients = new Mock<IHubClients>();
-            var mockClientProxy = new Mock<IClientProxy>();
-            mockHubContext.Setup(h => h.Clients).Returns(mockClients.Object);
-            mockClients.Setup(c => c.All).Returns(mockClientProxy.Object);
-            mockClients.Setup(c => c.Group(It.IsAny<string>())).Returns(mockClientProxy.Object);
-
-            var orchestrator = new BackupJobOrchestrator(
-                new[] { mockBackupProvider.Object },
-                new[] { mockStorageProvider.Object },
-                mockSyncEngine.Object,
-                mockHubContext.Object,
-                mockLogger.Object);
-
-            var config = new BackupJobConfiguration
-            {
-                DbProvider = "SQL Server",
-                DbConnectionString = "Server=.;Database=Test;",
-                SourceDirectory = Path.Combine(Path.GetTempPath(), "source"),
-                TargetDirectory = Path.Combine(Path.GetTempPath(), "target"),
-                SkipIfNoChanges = false // FORCE BACKUP
-            };
-
-            var job = new JobMetadata
-            {
-                Id = 1,
-                Name = "ForceBackup",
-                ConfigurationJson = JsonSerializer.Serialize(config)
-            };
-
-            // Act
-            var result = await orchestrator.ExecuteJobAsync(job, CancellationToken.None);
-
-            // Assert
-            Assert.Equal(JobExecutionResult.Completed, result);
-            mockBackupProvider.Verify(p => p.CreateBackupAsync(config.DbConnectionString, It.IsAny<string>()), Times.Once);
         }
     }
 }

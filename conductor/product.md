@@ -19,6 +19,9 @@ A versatile, extensible backup and file synchronization utility designed for bot
 
 ## User Experience
 - **Next.js Dashboard:** A modern, TypeScript-powered interface for real-time monitoring, job configuration, and performance analytics.
+- **Deep Observability:** Enterprise-grade visibility with persistent, timestamped execution logs for every run. The "Jenkins-style" console reveals exactly which files were scanned, changed, or skipped, providing absolute peace of mind and rapid debuggability.
+- **Premium Onboarding:** Interactive guided tours using `react-joyride` to introduce new users to the platform and explain complex configuration options.
+- **Guided Configuration:** Streamlined job creation with provider-specific connection templates, interactive directory pickers, and a user-friendly Cron builder to minimize keyboard entry.
 - **Reliability First:** Every backup job is verified via hash checks to ensure data integrity.
 - **Flexible Management:** Manage backup jobs visually through the dashboard or via a robust configuration layer.
 
