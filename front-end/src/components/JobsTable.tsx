@@ -4,16 +4,18 @@ import React from 'react';
 import ResponsiveTable, { IResponsiveTableColumnDefinition } from 'jattac.libs.web.responsive-table';
 import OverflowMenu, { IOverflowMenuItem } from 'jattac.libs.web.overflow-menu';
 import { JobMetadata, JobStatus } from '@/models/Job';
-import { FaPlay, FaTrash, FaPenToSquare, FaCircle } from 'react-icons/fa6';
+import JobHealthIcon from '@/components/JobHealthIcon';
+import { FaPlay, FaTrash, FaPenToSquare, FaCircle, FaClockRotateLeft } from 'react-icons/fa6';
 
 interface JobsTableProps {
     jobs: JobMetadata[];
     onTrigger: (id: number) => void;
     onEdit: (job: JobMetadata) => void;
     onDelete: (id: number) => void;
+    onShowHistory: (job: JobMetadata) => void;
 }
 
-const JobsTable: React.FC<JobsTableProps> = ({ jobs, onTrigger, onEdit, onDelete }) => {
+const JobsTable: React.FC<JobsTableProps> = ({ jobs, onTrigger, onEdit, onDelete, onShowHistory }) => {
     
     const getStatusColor = (status: JobStatus) => {
         switch (status) {
@@ -31,18 +33,18 @@ const JobsTable: React.FC<JobsTableProps> = ({ jobs, onTrigger, onEdit, onDelete
 
     const columns: IResponsiveTableColumnDefinition<JobMetadata>[] = [
         {
+            columnId: 'health',
+            displayLabel: 'Health',
+            cellRenderer: (job) => <JobHealthIcon score={job.healthScore} total={job.totalRunsInWindow} success={job.successCountInWindow} />,
+            getSortableValue: (job) => job.healthScore
+        },
+        {
             columnId: 'name',
             displayLabel: 'Job Name',
             cellRenderer: (job) => (
                 <div style={{ fontWeight: 600 }}>{job.name}</div>
             ),
             getSortableValue: (job) => job.name
-        },
-        {
-            columnId: 'type',
-            displayLabel: 'Type',
-            cellRenderer: (job) => <span>{job.type}</span>,
-            getSortableValue: (job) => job.type
         },
         {
             columnId: 'status',
@@ -62,9 +64,26 @@ const JobsTable: React.FC<JobsTableProps> = ({ jobs, onTrigger, onEdit, onDelete
             columnId: 'lastRun',
             displayLabel: 'Last Run',
             cellRenderer: (job) => (
-                <span>{job.lastRunAt ? new Date(job.lastRunAt).toLocaleString() : 'Never'}</span>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span>{job.lastRunAt ? new Date(job.lastRunAt).toLocaleString() : 'Never'}</span>
+                    {job.lastRunId && (
+                        <span style={{ fontSize: '0.7rem', color: 'var(--secondary)', fontWeight: 600 }}>
+                            #{job.lastRunId}
+                        </span>
+                    )}
+                </div>
             ),
             getSortableValue: (job) => job.lastRunAt || ''
+        },
+        {
+            columnId: 'nextRun',
+            displayLabel: 'Next Run',
+            cellRenderer: (job) => (
+                <span style={{ color: 'var(--info)', fontWeight: 500 }}>
+                    {job.nextRunAt ? new Date(job.nextRunAt).toLocaleString() : '---'}
+                </span>
+            ),
+            getSortableValue: (job) => job.nextRunAt || ''
         },
         {
             columnId: 'actions',
@@ -79,6 +98,14 @@ const JobsTable: React.FC<JobsTableProps> = ({ jobs, onTrigger, onEdit, onDelete
                         ),
                         onClick: () => onTrigger(job.id),
                         enabled: job.status !== JobStatus.InProgress
+                    },
+                    {
+                        content: (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <FaClockRotateLeft style={{ color: 'var(--accent)' }} /> Execution History
+                            </div>
+                        ),
+                        onClick: () => onShowHistory(job)
                     },
                     {
                         content: (

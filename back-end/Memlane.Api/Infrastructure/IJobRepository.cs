@@ -15,6 +15,12 @@ namespace Memlane.Api.Infrastructure
         Task<JobMetadata?> GetByIdAsync(int id);
         Task DeleteAsync(int id);
         Task UpdateAsync(JobMetadata job);
+
+        // Job Run History
+        Task<int> AddRunAsync(JobRun run);
+        Task UpdateRunAsync(JobRun run);
+        Task<IEnumerable<JobRun>> GetRunsByJobIdAsync(int jobId, int limit = 50);
+        Task<JobRun?> GetRunByIdAsync(int runId);
     }
 
     public class SqliteJobRepository : IJobRepository
@@ -42,12 +48,81 @@ namespace Memlane.Api.Infrastructure
                     CronExpression TEXT,
                     NextRunAt DATETIME
                 )");
+
+            await connection.ExecuteAsync(@"
+                CREATE TABLE IF NOT EXISTS JobRuns (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    JobId INTEGER NOT NULL,
+                    StartTime DATETIME NOT NULL,
+                    EndTime DATETIME,
+                    Status INTEGER NOT NULL,
+                    Logs TEXT,
+                    ResultMessage TEXT,
+                    FOREIGN KEY(JobId) REFERENCES Jobs(Id) ON DELETE CASCADE
+                )");
+
+            var columnNames = await connection.QueryAsync<string>("SELECT name FROM pragma_table_info('Jobs')");
+            
+            if (!columnNames.Contains("CronExpression"))
+            {
+                await connection.ExecuteAsync("ALTER TABLE Jobs ADD COLUMN CronExpression TEXT");
+            }
+            if (!columnNames.Contains("NextRunAt"))
+            {
+                await connection.ExecuteAsync("ALTER TABLE Jobs ADD COLUMN NextRunAt DATETIME");
+            }
+            if (!columnNames.Contains("ConfigurationJson"))
+            {
+                await connection.ExecuteAsync("ALTER TABLE Jobs ADD COLUMN ConfigurationJson TEXT");
+            }
         }
 
         public async Task<IEnumerable<JobMetadata>> GetAllJobsAsync()
         {
             using var connection = _connectionFactory.CreateConnection();
-            return await connection.QueryAsync<JobMetadata>("SELECT * FROM Jobs ORDER BY CreatedAt DESC");
+            
+            // Complex query to get Jobs + Latest Run ID + Health Score (based on last 5 runs)
+            // Health calculation: (SuccessfulRuns / TotalRunsInWindow) * 100
+            // Success = Completed (2) or Skipped (4)
+            return await connection.QueryAsync<JobMetadata>(@"
+                WITH LastFiveRuns AS (
+                    SELECT 
+                        JobId,
+                        Status,
+                        ROW_NUMBER() OVER (PARTITION BY JobId ORDER BY StartTime DESC) as rn
+                    FROM JobRuns
+                ),
+                JobStats AS (
+                    SELECT 
+                        JobId,
+                        COUNT(*) as TotalRuns,
+                        SUM(CASE WHEN Status IN (2, 4) THEN 1 ELSE 0 END) as SuccessCount
+                    FROM LastFiveRuns
+                    WHERE rn <= 5
+                    GROUP BY JobId
+                ),
+                LatestRun AS (
+                    SELECT 
+                        JobId, 
+                        Id as LastRunId, 
+                        Status as LastRunStatus,
+                        ROW_NUMBER() OVER (PARTITION BY JobId ORDER BY StartTime DESC) as rn
+                    FROM JobRuns
+                )
+                SELECT 
+                    j.*,
+                    lr.LastRunId,
+                    lr.LastRunStatus,
+                    COALESCE(js.TotalRuns, 0) as TotalRunsInWindow,
+                    COALESCE(js.SuccessCount, 0) as SuccessCountInWindow,
+                    CASE 
+                        WHEN js.TotalRuns IS NULL OR js.TotalRuns = 0 THEN 100 -- Default to healthy if no runs
+                        ELSE CAST((js.SuccessCount * 100.0 / js.TotalRuns) AS INTEGER)
+                    END as HealthScore
+                FROM Jobs j
+                LEFT JOIN JobStats js ON j.Id = js.JobId
+                LEFT JOIN LatestRun lr ON j.Id = lr.JobId AND lr.rn = 1
+                ORDER BY j.CreatedAt DESC");
         }
 
         public async Task<IEnumerable<JobMetadata>> GetPendingJobsAsync()
@@ -115,6 +190,44 @@ namespace Memlane.Api.Infrastructure
                     CronExpression = @CronExpression,
                     NextRunAt = @NextRunAt
                 WHERE Id = @Id", job);
+        }
+
+        // --- Job Run Methods ---
+
+        public async Task<int> AddRunAsync(JobRun run)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            return await connection.QuerySingleAsync<int>(@"
+                INSERT INTO JobRuns (JobId, StartTime, Status, Logs, ResultMessage) 
+                VALUES (@JobId, @StartTime, @Status, @Logs, @ResultMessage);
+                SELECT last_insert_rowid();",
+                run);
+        }
+
+        public async Task UpdateRunAsync(JobRun run)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            await connection.ExecuteAsync(@"
+                UPDATE JobRuns 
+                SET EndTime = @EndTime, 
+                    Status = @Status, 
+                    Logs = @Logs, 
+                    ResultMessage = @ResultMessage
+                WHERE Id = @Id", run);
+        }
+
+        public async Task<IEnumerable<JobRun>> GetRunsByJobIdAsync(int jobId, int limit = 50)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            return await connection.QueryAsync<JobRun>(
+                "SELECT * FROM JobRuns WHERE JobId = @JobId ORDER BY StartTime DESC LIMIT @Limit", 
+                new { JobId = jobId, Limit = limit });
+        }
+
+        public async Task<JobRun?> GetRunByIdAsync(int runId)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            return await connection.QuerySingleOrDefaultAsync<JobRun>("SELECT * FROM JobRuns WHERE Id = @Id", new { Id = runId });
         }
     }
 }

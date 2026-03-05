@@ -17,6 +17,23 @@ export interface JobMetadata {
     configurationJson?: string;
     cronExpression?: string;
     nextRunAt?: string;
+
+    // Calculated / Joined fields for Monitoring
+    lastRunId?: number;
+    lastRunStatus?: JobStatus;
+    healthScore: number; // 0 to 100
+    totalRunsInWindow: number;
+    successCountInWindow: number;
+}
+
+export interface JobRun {
+    id: number;
+    jobId: number;
+    startTime: string;
+    endTime?: string;
+    status: JobStatus;
+    logs?: string;
+    resultMessage?: string;
 }
 
 export interface JobStatusUpdate {
