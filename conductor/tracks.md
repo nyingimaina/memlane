@@ -14,7 +14,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: v1.0.0 Stabilization (Folder Backup Only)**
+- [x] **Track: v1.0.0 Stabilization (Folder Backup Only)**
   *Link: [./tracks/v1_0_0_stabilization_20260306/](./tracks/v1_0_0_stabilization_20260306/)*
 
 ---
