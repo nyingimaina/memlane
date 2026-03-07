@@ -1,48 +1,46 @@
-# Memlane Backup Utility
+# Memlane v1.0.0
 
-Memlane is an extensible backup and synchronization utility with a .NET 8 backend and a Next.js frontend.
+Memlane is a streamlined, rock-solid folder backup and synchronization utility. Built with a .NET 10 backend and a React (Next.js) frontend, it provides an at-a-glance dashboard for managing your critical data protection pipelines.
 
-## Getting Started (Backend)
+## Key Features (v1.0.0)
+- **Folder Backup & Sync:** Intelligent synchronization using SHA256 hashing to only copy changed files.
+- **Job Health Monitoring:** Jenkins-inspired weather icons (Sunny, Cloudy, Stormy) based on job stability.
+- **Smart Scheduling:** Full Cron-based scheduling for automated background backups.
+- **Ignore Patterns:** Full support for `.memignore` style patterns to exclude logs, temp files, and bulky directories.
+- **Retention Management:** Automated rotation of old backups to save disk space.
+- **Windows Integration:** Packaged as a standard Windows application via Inno Setup.
+
+## Getting Started (Development)
 
 ### Prerequisites
-- .NET 8 SDK
+- .NET 10 SDK
+- Node.js (v18+)
 
-### Running the API
-1. Navigate to the root directory.
-2. Run the following command:
+### Running the App
+1. **Start Backend:**
    ```bash
-   dotnet run --project back-end/Memlane.Api/Memlane.Api.csproj
+   cd back-end/Memlane.Api
+   dotnet run
    ```
-3. The API will start and initialize a local SQLite database (`memlane.db`).
+2. **Start Frontend:**
+   ```bash
+   cd front-end
+   npm install
+   npm run dev
+   ```
+3. Open `http://localhost:3000`
 
-### Manual Verification (Phase 2)
+## Deployment & Installation
 
-Since the dashboard is not yet implemented, you can verify Phase 2 logic using the provided test suite or by observing logs during background job execution.
+Memlane can be built into a standalone Windows installer using the provided scripts in the `deployment/` folder.
 
-#### 1. Run Automated Tests
-Verify all core logic (Providers, Sync Engine, Compression) by running:
-```bash
-dotnet test
-```
+1. **Publish:** Run `deployment/publish.ps1` from PowerShell. This will bundle the frontend into the backend's `wwwroot` and publish a self-contained executable.
+2. **Pack:** Open `deployment/Memlane.iss` in **Inno Setup** and click 'Compile'.
+3. **Install:** Run the generated `MemlaneSetup_v1.0.0.exe`.
 
-#### 2. Verify Database Providers (Simulation)
-The `SqlServerBackupProvider` and `MariaDbBackupProvider` currently simulate file generation. You can see their behavior in `ProviderTests.cs`.
+## Project Architecture
+- **Vertical Slice Architecture:** UI, Logic, and Data for each feature are co-located for maximum maintainability.
+- **Modern Tech Stack:** .NET 10, Dapper (SQLite), Next.js 14, SignalR (Real-time updates).
 
-#### 3. Verify File Synchronization
-The `FileHashSyncEngine` uses SHA256 hashing. You can verify its behavior by:
-1. Creating a `source` and `target` directory.
-2. Placing files in `source`.
-3. The engine (triggered via tests or future API) will only copy modified files based on hash changes.
-
-#### 5. Verify Dynamic Filenames (Phase 3)
-Filenames now follow the pattern: `{Source}_Full_{Timestamp}_{ShortHash}.{ext}`.
-You can verify this in logs or by inspecting simulation outputs in `ProviderTests.cs`.
-
-#### 6. Verify Change-Aware Skipping (Phase 3)
-- If a folder has no changes, the job will log "Skipped" and stop before the database/compression steps (if `SkipIfNoChanges` is true).
-- You can force a backup by setting `SkipIfNoChanges: false` in the job configuration.
-- Verification is covered in `EndToEndTests.cs`.
-
-## Project Structure
-- `back-end/`: .NET 8 Web API and xUnit Tests.
-- `conductor/`: Project configuration, implementation plans, and tracks.
+---
+*Developed with love for data integrity.*
