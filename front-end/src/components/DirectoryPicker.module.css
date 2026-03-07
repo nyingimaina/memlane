@@ -1,6 +1,7 @@
 @import "../styles/theme.module.css";
 
 .mainContainer {
+    composes: themeTokens from "../styles/theme.module.css";
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -11,6 +12,7 @@
 }
 
 .container {
+  composes: themeTokens from "../styles/theme.module.css";
   display: flex;
   gap: 0.5rem;
   align-items: center;
@@ -22,10 +24,11 @@
 }
 
 .browseButton {
+    composes: themeTokens from "../styles/theme.module.css";
     padding: 0.75rem;
     border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    background-color: #10b981; /* Explicit green */
+    border: 1px solid var(--theme-border);
+    background-color: #10b981; /* Keep semantic green but use theme tokens where possible */
     color: #ffffff;
     cursor: pointer;
     display: flex;
@@ -36,5 +39,5 @@
 
 .browseButton:hover {
     background-color: #059669;
-    border-color: #4361ee;
+    border-color: var(--theme-primary);
 }

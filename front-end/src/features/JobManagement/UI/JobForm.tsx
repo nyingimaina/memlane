@@ -15,6 +15,7 @@ import ZipOptions from "./CompressionOptions/ZipOptions";
 import SevenZipOptions from "./CompressionOptions/SevenZipOptions";
 
 import styles from "../Styles/JobForm.module.css";
+import theme from "../../../styles/theme.module.css";
 
 interface JobFormProps {
   initialJob?: JobMetadata;
@@ -54,7 +55,7 @@ const JobForm: React.FC<JobFormProps> = ({
   };
 
   return (
-    <div className={styles.formContainer}>
+    <div className={`${styles.formContainer} ${theme.visibilityProvider}`}>
       <div className={styles.header}>
         <TutorialIcon onClick={triggerTutorial} />
       </div>

@@ -1,10 +1,10 @@
 /* 
    Shared Theme Tokens for CSS Modules 
-   We define hardcoded fallbacks here because CSS Modules 
-   should be self-contained and not rely on global vars.
+   We avoid :root to ensure no global leakage and to satisfy 
+   CSS Modules pure selector requirements.
 */
 
-:root {
+.themeTokens {
     --theme-background: #ffffff;
     --theme-foreground: #1a1c1e;
     --theme-primary: #4361ee;
@@ -17,23 +17,26 @@
 }
 
 .card {
-    background: #ffffff;
+    composes: themeTokens;
+    background: var(--theme-card-bg);
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--theme-border);
 }
 
 .label {
+    composes: themeTokens;
     font-weight: 600;
     font-size: 0.85rem;
-    color: #64748b;
+    color: var(--theme-text-light);
     margin-bottom: 0.4rem;
     display: block;
 }
 
 .primaryButton {
-    background-color: #4361ee;
+    composes: themeTokens;
+    background-color: var(--theme-primary);
     color: #ffffff;
     padding: 0.75rem 1.5rem;
     border-radius: 8px;
@@ -48,34 +51,41 @@
 }
 
 .infoBg {
-    background-color: #f8fafc;
+    composes: themeTokens;
+    background-color: var(--theme-info-bg);
 }
 
 .border {
-    border: 1px solid #e2e8f0;
+    composes: themeTokens;
+    border: 1px solid var(--theme-border);
 }
 
 /* Base styles for selects to ensure high visibility */
 .baseSelect {
+    composes: themeTokens;
     padding: 0.5rem;
     border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    background-color: #ffffff;
-    color: #1e293b;
+    border: 1px solid var(--theme-border);
+    background-color: var(--theme-background);
+    color: var(--theme-text-dark);
     font-size: 0.9rem;
     font-weight: 500;
     outline: none;
 }
 
 .baseSelect:focus {
-    border-color: #4361ee;
+    border-color: var(--theme-primary);
     box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.1);
 }
 
-/* Global utility to force visibility of library components in side pane */
-:global(.zest-side-pane-header button),
-:global(.zest-side-pane-close),
-:global([class*="SidePane-module_closeButton"]) {
+/* 
+   Global utility to force visibility of library components in side pane.
+   We wrap them in a local class to satisfy CSS Modules 'pure selector' requirements.
+   This class should be applied to the top-level container of the side pane content.
+*/
+.visibilityProvider :global(.zest-side-pane-header button),
+.visibilityProvider :global(.zest-side-pane-close),
+.visibilityProvider :global([class*="SidePane-module_closeButton"]) {
     color: #1e293b !important;
     opacity: 1 !important;
     visibility: visible !important;

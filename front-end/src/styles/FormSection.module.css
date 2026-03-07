@@ -1,6 +1,7 @@
 @import "./theme.module.css";
 
 .section {
+    composes: themeTokens from "./theme.module.css";
     display: flex;
     flex-direction: column;
     gap: 0.4rem;

@@ -1,6 +1,7 @@
 @import "../../../styles/theme.module.css";
 
 .optionsContainer {
+    composes: themeTokens from "../../../styles/theme.module.css";
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -12,7 +13,8 @@
 }
 
 .label {
+    composes: themeTokens from "../../../styles/theme.module.css";
     font-size: 0.85rem;
     font-weight: 600;
-    color: #64748b;
+    color: var(--theme-text-light);
 }
