@@ -39,3 +39,21 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+
+[UninstallDelete]
+Type: files; Name: "{app}\memlane.db"
+Type: files; Name: "{app}\*.log"
+Type: filesandordirs; Name: "{localappdata}\Memlane"
+
+[Code]
+procedure CurUninstallStepChanged(UninstallStep: TUninstallStep);
+begin
+  if UninstallStep = usPostUninstall then
+  begin
+    if MsgBox('Do you want to delete all job configurations and backup history?', mbConfirmation, MB_YESNO) = IDYES then
+    begin
+      // Logic to remove the database if it was stored in a custom user location could go here
+      // For now, [UninstallDelete] handles the default local files.
+    end;
+  end;
+end;
