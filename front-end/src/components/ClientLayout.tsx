@@ -7,6 +7,8 @@ import ZestThemeProvider from "@/components/ZestThemeProvider";
 import { UIProvider, useUI } from "@/logic/UIContext";
 import GuidedTour from "@/components/GuidedTour";
 
+import styles from "@/styles/theme.module.css";
+
 interface ClientLayoutProps {
     children: React.ReactNode;
 }
@@ -15,7 +17,7 @@ const LayoutContent: React.FC<ClientLayoutProps> = ({ children }) => {
     const { sidePane, closeSidePane, tutorialTriggered, clearTutorialTrigger } = useUI();
 
     return (
-        <>
+        <div className={styles.visibilityProvider}>
             <Sidebar />
             <GuidedTour manualTrigger={tutorialTriggered} onComplete={clearTutorialTrigger} />
             <ZestResponsiveLayout 
@@ -32,7 +34,7 @@ const LayoutContent: React.FC<ClientLayoutProps> = ({ children }) => {
                     </main>
                 }
             />
-        </>
+        </div>
     );
 };
 

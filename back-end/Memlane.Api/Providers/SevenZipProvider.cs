@@ -12,15 +12,30 @@ namespace Memlane.Api.Providers
         {
             _logger = logger;
             
-            // Set library path for SevenZipSharp.Interop
-            var libPath = Path.Combine(AppContext.BaseDirectory, Environment.Is64BitProcess ? "x64" : "x86", "7z.dll");
-            if (File.Exists(libPath))
-            {
-                SevenZipBase.SetLibraryPath(libPath);
-            }
-            else {
-                libPath = Path.Combine(AppContext.BaseDirectory, "7z.dll");
-                if (File.Exists(libPath)) SevenZipBase.SetLibraryPath(libPath);
+            try {
+                // Set library path for SevenZipSharp.Interop
+                // The Interop package places 7z.dll in x64 or x86 subfolders in the base directory
+                var baseDir = AppContext.BaseDirectory;
+                var x64Path = Path.Combine(baseDir, "x64", "7z.dll");
+                var x86Path = Path.Combine(baseDir, "x86", "7z.dll");
+                var rootPath = Path.Combine(baseDir, "7z.dll");
+
+                string? selectedPath = null;
+                if (Environment.Is64BitProcess && File.Exists(x64Path)) selectedPath = x64Path;
+                else if (!Environment.Is64BitProcess && File.Exists(x86Path)) selectedPath = x86Path;
+                else if (File.Exists(rootPath)) selectedPath = rootPath;
+
+                if (selectedPath != null)
+                {
+                    SevenZipBase.SetLibraryPath(selectedPath);
+                    _logger.LogInformation("7-Zip library loaded from: {Path}", selectedPath);
+                }
+                else
+                {
+                    _logger.LogWarning("7z.dll not found in standard locations (x64, x86, or root). 7-Zip compression will likely fail. BaseDir: {BaseDir}", baseDir);
+                }
+            } catch (Exception ex) {
+                _logger.LogError(ex, "Error initializing 7-Zip library path.");
             }
         }
 
@@ -49,7 +64,7 @@ namespace Memlane.Api.Providers
                 _ => CompressionLevel.Normal
             };
 
-            logger?.Invoke($"[7-Zip] Starting compression (Level: {level})...");
+            logger?.Invoke($"[7-Zip] Using native library to package artifacts (Level: {level})...");
 
             var compressor = new SevenZipCompressor
             {
@@ -67,6 +82,7 @@ namespace Memlane.Api.Providers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "SevenZipProvider failed.");
+                logger?.Invoke($"[7-Zip-ERR] {ex.Message}");
                 throw;
             }
         }
