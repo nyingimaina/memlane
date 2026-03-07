@@ -42,6 +42,7 @@ builder.Services.AddSingleton<IStorageProvider, LocalStorageProvider>();
 builder.Services.AddSingleton<IStorageProvider, FolderStorageProvider>();
 builder.Services.AddSingleton<IStorageProvider, S3StorageProvider>();
 builder.Services.AddSingleton<IStorageProviderFactory, StorageProviderFactory>();
+builder.Services.AddSingleton<ICompressionProvider, SevenZipCommandLineProvider>();
 builder.Services.AddScoped<IJobOrchestrator, BackupJobOrchestrator>();
 builder.Services.AddHostedService<BackgroundJobService>();
 

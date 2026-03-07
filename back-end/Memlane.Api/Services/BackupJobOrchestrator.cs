@@ -28,6 +28,7 @@ namespace Memlane.Api.Services
         private readonly ISyncEngine _syncEngine;
         private readonly IRetentionManager _retentionManager;
         private readonly IFilenameGenerator _filenameGenerator;
+        private readonly ICompressionProvider _compressionProvider;
         private readonly IJobRepository _repository;
         private readonly IHubContext<JobHub> _hubContext;
         private readonly ILogger<BackupJobOrchestrator> _logger;
@@ -38,6 +39,7 @@ namespace Memlane.Api.Services
             ISyncEngine syncEngine,
             IRetentionManager retentionManager,
             IFilenameGenerator filenameGenerator,
+            ICompressionProvider compressionProvider,
             IJobRepository repository,
             IHubContext<JobHub> hubContext,
             ILogger<BackupJobOrchestrator> logger)
@@ -47,6 +49,7 @@ namespace Memlane.Api.Services
             _syncEngine = syncEngine;
             _retentionManager = retentionManager;
             _filenameGenerator = filenameGenerator;
+            _compressionProvider = compressionProvider;
             _repository = repository;
             _hubContext = hubContext;
             _logger = logger;
@@ -138,15 +141,15 @@ namespace Memlane.Api.Services
 
                 // 5. Filename Generation & Compression
                 string finalArtifactPath = artifactWorkspace;
-                string extension = config.EnableCompression ? ".zip" : "";
+                string extension = config.EnableCompression ? ".7z" : "";
                 string fileName = _filenameGenerator.Generate(job.Name, extension);
                 
                 if (config.EnableCompression)
                 {
-                    var zipPath = Path.Combine(Path.GetTempPath(), fileName);
-                    await runLogger.LogAsync($"[Compression] Packaging {Directory.GetFiles(artifactWorkspace, "*", SearchOption.AllDirectories).Length} files into archive...", 70);
-                    await CompressionUtility.CompressAsync(artifactWorkspace, zipPath);
-                    finalArtifactPath = zipPath;
+                    var sevenZipPath = Path.Combine(Path.GetTempPath(), fileName);
+                    await runLogger.LogAsync($"[Compression] Packaging artifacts into 7z archive (mx=5)...", 70);
+                    await _compressionProvider.CompressAsync(artifactWorkspace, sevenZipPath, "Normal", async (msg) => await runLogger.LogAsync(msg));
+                    finalArtifactPath = sevenZipPath;
                     await runLogger.LogAsync($"[Compression] Done. Archive size: {new FileInfo(finalArtifactPath).Length / 1024} KB");
                 }
 
