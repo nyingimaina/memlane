@@ -67,6 +67,8 @@ else
 }
 
 app.UseHttpsRedirection();
+app.UseDefaultFiles();
+app.UseStaticFiles(); // Serve frontend from wwwroot
 app.UseCors();
 
 app.MapHub<JobHub>("/hubs/jobs");
@@ -146,5 +148,8 @@ app.MapGet("/api/runs/{id}", async (int id, IJobRepository repo) =>
     var run = await repo.GetRunByIdAsync(id);
     return run != null ? Results.Ok(run) : Results.NotFound();
 });
+
+// Fallback to index.html for SPA routing
+app.MapFallbackToFile("index.html");
 
 app.Run();

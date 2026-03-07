@@ -1,0 +1,4 @@
+D:\work\nyingi\code\Memlane\back-end\Memlane.Api\bin\Release\net10.0\win-x64\publish\appsettings.Development.json
+D:\work\nyingi\code\Memlane\back-end\Memlane.Api\bin\Release\net10.0\win-x64\publish\appsettings.json
+D:\work\nyingi\code\Memlane\back-end\Memlane.Api\bin\Release\net10.0\win-x64\publish\Memlane.Api.pdb
+D:\work\nyingi\code\Memlane\back-end\Memlane.Api\bin\Release\net10.0\win-x64\publish\Memlane.Api.exe

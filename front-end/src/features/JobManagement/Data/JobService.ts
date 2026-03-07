@@ -6,11 +6,11 @@ export const JobService = {
         return await JobRepository.getAll();
     },
 
-    async create(job: Partial<JobMetadata>): Promise<number> {
+    async create(job: Partial<JobMetadata>): Promise<JobMetadata> {
         return await JobRepository.create(job);
     },
 
-    async update(id: number, job: Partial<JobMetadata>): Promise<void> {
+    async update(id: number, job: Partial<JobMetadata>): Promise<JobMetadata> {
         return await JobRepository.update(id, job);
     },
 
