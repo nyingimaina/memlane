@@ -13,10 +13,4 @@ namespace Memlane.Api.Providers
         Task DeleteAsync(string path);
         Task<bool> ExistsAsync(string path);
     }
-
-    public interface ICompressionProvider
-    {
-        string ProviderName { get; }
-        Task<string> CompressAsync(string sourceDirectory, string targetFilePath, string? level = "Normal", Action<string>? logger = null);
-    }
 }

@@ -14,17 +14,18 @@
 
 .checkboxGroup {
     display: flex;
+    align-items: center;
     gap: 2rem;
-    padding: 0.5rem;
+    padding: 0.75rem;
     border-radius: 8px;
-    /* Uses theme logic implicitly via inheritance or direct class application in component */
+    background-color: #f8fafc; /* info-bg fallback */
 }
 
 .footer {
     display: flex;
     gap: 1rem;
     justify-content: flex-end;
-    marginTop: 1rem;
+    margin-top: 1rem;
 }
 
 .checkboxLabel {
@@ -34,4 +35,40 @@
     cursor: pointer;
     font-weight: 600;
     font-size: 0.85rem;
+    color: #64748b; /* secondary fallback */
+}
+
+.storageProviderSelect {
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #1e293b;
+    height: 100%;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+.compressionSection {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-radius: 8px;
+    background-color: #f1f5f9;
+}
+
+.compressionHeader {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.typeSelect {
+    padding: 0.4rem;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 600;
 }

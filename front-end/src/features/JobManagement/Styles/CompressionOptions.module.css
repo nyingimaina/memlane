@@ -1,0 +1,29 @@
+@import "../../../styles/theme.module.css";
+
+.optionsContainer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+}
+
+.select {
+    padding: 0.4rem;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0; /* Local token fallback since we assume no global vars */
+    background: #ffffff;
+    color: #1e293b;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.select:focus {
+    border-color: #3b82f6;
+}
+
+.label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+}

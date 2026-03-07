@@ -11,8 +11,10 @@ import FormSection from "@/components/FormSection";
 import { useUI } from "@/logic/UIContext";
 import { useJobForm } from "../Logic/useJobForm";
 
+import ZipOptions from "./CompressionOptions/ZipOptions";
+import SevenZipOptions from "./CompressionOptions/SevenZipOptions";
+
 import styles from "../Styles/JobForm.module.css";
-import theme from "../../../styles/theme.module.css";
 
 interface JobFormProps {
   initialJob?: JobMetadata;
@@ -31,6 +33,24 @@ const JobForm: React.FC<JobFormProps> = ({
   const handleSubmit = async () => {
     const data = prepareSubmitData();
     await onSubmit(data);
+  };
+
+  const renderCompressionOptions = () => {
+    const type = state.config.compressionType || "Zip";
+    switch (type) {
+      case "Zip":
+        return <ZipOptions 
+                  optionsJson={state.config.compressionOptionsJson} 
+                  onChange={(json) => actions.setConfig({ ...state.config, compressionOptionsJson: json })} 
+               />;
+      case "7-Zip":
+        return <SevenZipOptions 
+                  optionsJson={state.config.compressionOptionsJson} 
+                  onChange={(json) => actions.setConfig({ ...state.config, compressionOptionsJson: json })} 
+               />;
+      default:
+        return null;
+    }
   };
 
   return (
@@ -66,23 +86,13 @@ const JobForm: React.FC<JobFormProps> = ({
         columns={2}
         className="storage-destination-config"
       >
-        <div
-          className="storage-provider-select"
-          style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}
-        >
+        <div className="storage-provider-select">
           <select
+            className={styles.storageProviderSelect}
             value={state.config.storageProvider}
             onChange={(e) =>
               actions.setConfig({ ...state.config, storageProvider: e.target.value })
             }
-            style={{
-              padding: "0.75rem",
-              borderRadius: "8px",
-              border: "1px solid var(--border)",
-              background: "var(--card-bg)",
-              color: "var(--foreground)",
-              height: "100%",
-            }}
           >
             <option value="Folder">Local Folder (Testing)</option>
             <option value="Local">Local Disk (Direct)</option>
@@ -127,41 +137,41 @@ const JobForm: React.FC<JobFormProps> = ({
         )}
       </FormSection>
 
-      <div className={`${styles.checkboxGroup} ${theme.infoBg}`}>
-        <label className={styles.checkboxLabel}>
-          <input
-            type="checkbox"
-            checked={state.config.enableCompression}
-            onChange={(e) =>
-              actions.setConfig({ ...state.config, enableCompression: e.target.checked })
-            }
-          />
-          <span style={{ color: "var(--secondary)" }}>Enable 7z Compression</span>
-        </label>
+      <div className={styles.compressionSection}>
+        <div className={styles.compressionHeader}>
+            <label className={styles.checkboxLabel}>
+            <input
+                type="checkbox"
+                checked={state.config.enableCompression}
+                onChange={(e) =>
+                actions.setConfig({ ...state.config, enableCompression: e.target.checked })
+                }
+            />
+            <span>Enable Compression</span>
+            </label>
+
+            {state.config.enableCompression && (
+            <select
+                className={styles.typeSelect}
+                value={state.config.compressionType || "Zip"}
+                onChange={(e) =>
+                actions.setConfig({ ...state.config, compressionType: e.target.value })
+                }
+            >
+                <option value="Zip">Standard ZIP</option>
+                <option value="7-Zip">High-Ratio 7z</option>
+            </select>
+            )}
+        </div>
 
         {state.config.enableCompression && (
-          <select
-            value={state.config.compressionLevel || "Normal"}
-            onChange={(e) =>
-              actions.setConfig({ ...state.config, compressionLevel: e.target.value as any })
-            }
-            style={{ 
-              padding: "0.4rem", 
-              borderRadius: "6px", 
-              border: "1px solid var(--border)", 
-              background: "var(--card-bg)", 
-              color: "var(--foreground)",
-              fontSize: "0.85rem"
-            }}
-          >
-            <option value="Fastest">Fastest</option>
-            <option value="Fast">Fast</option>
-            <option value="Normal">Normal</option>
-            <option value="Maximum">Maximum</option>
-            <option value="Ultra">Ultra</option>
-          </select>
+            <div className="compression-options">
+                {renderCompressionOptions()}
+            </div>
         )}
+      </div>
 
+      <div className={styles.checkboxGroup}>
         <label className={styles.checkboxLabel}>
           <input
             type="checkbox"
@@ -170,7 +180,7 @@ const JobForm: React.FC<JobFormProps> = ({
               actions.setConfig({ ...state.config, skipIfNoChanges: e.target.checked })
             }
           />
-          <span style={{ color: "var(--secondary)" }}>Skip if no changes</span>
+          <span>Skip if no changes</span>
         </label>
       </div>
 

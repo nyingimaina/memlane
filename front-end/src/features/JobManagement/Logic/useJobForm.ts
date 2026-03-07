@@ -13,7 +13,9 @@ export const useJobForm = (initialJob?: JobMetadata) => {
             skipIfNoChanges: true, 
             dbProvider: 'None', 
             storageProvider: 'Folder', 
-            retentionCount: 5 
+            retentionCount: 5,
+            compressionType: 'Zip',
+            compressionOptionsJson: JSON.stringify({ level: 'Optimal' })
         };
 
     const [config, setConfig] = useState<BackupJobConfiguration>(initialConfig);

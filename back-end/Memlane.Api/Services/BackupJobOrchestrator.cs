@@ -28,7 +28,7 @@ namespace Memlane.Api.Services
         private readonly ISyncEngine _syncEngine;
         private readonly IRetentionManager _retentionManager;
         private readonly IFilenameGenerator _filenameGenerator;
-        private readonly ICompressionProvider _compressionProvider;
+        private readonly ICompressionProviderFactory _compressionProviderFactory;
         private readonly IJobRepository _repository;
         private readonly IHubContext<JobHub> _hubContext;
         private readonly ILogger<BackupJobOrchestrator> _logger;
@@ -39,7 +39,7 @@ namespace Memlane.Api.Services
             ISyncEngine syncEngine,
             IRetentionManager retentionManager,
             IFilenameGenerator filenameGenerator,
-            ICompressionProvider compressionProvider,
+            ICompressionProviderFactory compressionProviderFactory,
             IJobRepository repository,
             IHubContext<JobHub> hubContext,
             ILogger<BackupJobOrchestrator> logger)
@@ -49,7 +49,7 @@ namespace Memlane.Api.Services
             _syncEngine = syncEngine;
             _retentionManager = retentionManager;
             _filenameGenerator = filenameGenerator;
-            _compressionProvider = compressionProvider;
+            _compressionProviderFactory = compressionProviderFactory;
             _repository = repository;
             _hubContext = hubContext;
             _logger = logger;
@@ -141,26 +141,33 @@ namespace Memlane.Api.Services
 
                 // 5. Filename Generation & Compression
                 string finalArchiveFile = "";
-                string extension = config.EnableCompression ? ".7z" : "";
-                string fileName = _filenameGenerator.Generate(job.Name, extension);
+                string fileName = "";
                 
                 if (config.EnableCompression)
                 {
+                    var compressionProvider = _compressionProviderFactory.GetProvider(config.CompressionType);
+                    string extension = compressionProvider.DefaultExtension;
+                    fileName = _filenameGenerator.Generate(job.Name, extension);
+
                     // Create in a specific temp compression folder
                     var compressionDir = Path.Combine(Path.GetTempPath(), "Memlane", "Compression", Guid.NewGuid().ToString().Substring(0, 8));
                     if (!Directory.Exists(compressionDir)) Directory.CreateDirectory(compressionDir);
                     
                     var tempArchivePath = Path.Combine(compressionDir, fileName);
                     
-                    await runLogger.LogAsync($"[Compression] Packaging artifacts into 7z archive ({config.CompressionLevel ?? "Normal"} level)...", 70);
+                    await runLogger.LogAsync($"[Compression] Using {compressionProvider.ProviderName} format...", 70);
                     try {
-                        await _compressionProvider.CompressAsync(artifactWorkspace, tempArchivePath, config.CompressionLevel ?? "Normal", async (msg) => await runLogger.LogAsync(msg));
+                        await compressionProvider.CompressAsync(artifactWorkspace, tempArchivePath, config.CompressionOptionsJson, async (msg) => await runLogger.LogAsync(msg));
                         finalArchiveFile = tempArchivePath;
                         await runLogger.LogAsync($"[Compression] Successfully created: {fileName} ({new FileInfo(finalArchiveFile).Length / 1024} KB)");
                     } catch (Exception ex) {
                         if (Directory.Exists(compressionDir)) Directory.Delete(compressionDir, true);
                         throw new Exception($"Compression failed: {ex.Message}", ex);
                     }
+                }
+                else
+                {
+                    fileName = _filenameGenerator.Generate(job.Name, "");
                 }
 
                 // 6. Storage Provider (Move to Final Destination)
@@ -182,8 +189,6 @@ namespace Memlane.Api.Services
                     else
                     {
                         await runLogger.LogAsync($"[Storage] Mirroring workspace to {storage.ProviderName} destination: {targetDest}...", 90);
-                        // For non-compressed, we mirror the artifact workspace (which is a copy of sync workspace)
-                        // This might be redundant if sync workspace is already persistent, but ensures "Pick -> Move"
                         await storage.SaveAsync(artifactWorkspace, targetPath); 
                     }
 
@@ -304,7 +309,10 @@ namespace Memlane.Api.Services
         [JsonPropertyName("retentionCount")]
         public int RetentionCount { get; set; }
 
-        [JsonPropertyName("compressionLevel")]
-        public string? CompressionLevel { get; set; }
+        [JsonPropertyName("compressionType")]
+        public string? CompressionType { get; set; }
+
+        [JsonPropertyName("compressionOptionsJson")]
+        public string? CompressionOptionsJson { get; set; }
     }
 }
