@@ -1,6 +1,40 @@
+@import "../styles/theme.module.css";
+
+.mainContainer {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.label {
+    composes: label from "../styles/theme.module.css";
+}
+
 .container {
   display: flex;
   gap: 0.5rem;
   align-items: center;
   width: 100%;
+}
+
+.textboxWrapper {
+    flex: 1;
+}
+
+.browseButton {
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background-color: #10b981; /* Explicit green */
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.browseButton:hover {
+    background-color: #059669;
+    border-color: #4361ee;
 }

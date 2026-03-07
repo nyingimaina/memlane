@@ -37,34 +37,25 @@ const DirectoryPicker: React.FC<DirectoryPickerProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      // webkitRelativePath gives the path within the selected directory
-      // We take the first part which is the directory name
       const path = files[0].webkitRelativePath.split("/")[0];
       onChange(path);
     }
   };
 
-  const labelStyle: React.CSSProperties = {
-    fontWeight: 600,
-    fontSize: "0.85rem",
-    color: "var(--secondary)",
-    marginBottom: "0.4rem",
-  };
-
   return (
-    <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
-      {label && <label style={labelStyle}>{label}</label>}
+    <div className={styles.mainContainer}>
+      {label && <label className={styles.label}>{label}</label>}
       <input
         type="file"
         ref={fileInputRef}
         style={{ display: "none" }}
-        // @ts-ignore - webkitdirectory is non-standard but widely supported
+        // @ts-ignore
         webkitdirectory=""
         directory=""
         onChange={handleFileChange}
       />
       <div className={styles.container}>
-        <div>
+        <div className={styles.textboxWrapper}>
           <ZestTextbox
             placeholder={placeholder}
             value={value}
@@ -77,22 +68,7 @@ const DirectoryPicker: React.FC<DirectoryPickerProps> = ({
         <button
           onClick={handleBrowse}
           title="Browse folders..."
-          style={{
-            padding: "0.75rem",
-            borderRadius: "8px",
-            border: "1px solid var(--border)",
-            background: "green",
-            color: "var(--accent)",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "all 0.2s",
-          }}
-          onMouseOver={(e) =>
-            (e.currentTarget.style.backgroundColor = "var(--border)")
-          }
-          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "green")}
+          className={styles.browseButton}
         >
           <FaFolderOpen size={18} />
         </button>

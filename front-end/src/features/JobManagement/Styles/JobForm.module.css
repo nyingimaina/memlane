@@ -5,6 +5,8 @@
     flex-direction: column;
     gap: 1.5rem;
     padding: 1rem;
+    background-color: #ffffff; /* Explicit white background */
+    color: #1e293b; /* Explicit dark text */
 }
 
 .header {
@@ -18,7 +20,8 @@
     gap: 2rem;
     padding: 0.75rem;
     border-radius: 8px;
-    background-color: #f8fafc; /* info-bg fallback */
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
 }
 
 .footer {
@@ -35,27 +38,23 @@
     cursor: pointer;
     font-weight: 600;
     font-size: 0.85rem;
-    color: #64748b; /* secondary fallback */
+    color: #64748b;
 }
 
 .storageProviderSelect {
-    padding: 0.75rem;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    background: #ffffff;
-    color: #1e293b;
+    composes: baseSelect from "../../../styles/theme.module.css";
+    width: 100%;
     height: 100%;
-    font-size: 0.9rem;
-    outline: none;
 }
 
 .compressionSection {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    padding: 0.5rem;
+    padding: 1rem;
     border-radius: 8px;
     background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
 }
 
 .compressionHeader {
@@ -65,10 +64,24 @@
 }
 
 .typeSelect {
-    padding: 0.4rem;
-    border-radius: 6px;
-    border: 1px solid #e2e8f0;
-    background: #ffffff;
+    composes: baseSelect from "../../../styles/theme.module.css";
     font-size: 0.85rem;
     font-weight: 600;
+}
+
+.compressionOptions {
+    margin-top: 0.5rem;
+}
+
+/* Ensure the side pane itself has a clear background and text */
+:global(.zest-side-pane) {
+    background-color: #ffffff !important;
+    color: #1e293b !important;
+}
+
+/* Fix for invisible close button - targeting standard Zest classes if present */
+:global(.zest-side-pane-close) {
+    color: #64748b !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }

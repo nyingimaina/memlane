@@ -165,7 +165,7 @@ const JobForm: React.FC<JobFormProps> = ({
         </div>
 
         {state.config.enableCompression && (
-            <div className="compression-options">
+            <div className={styles.compressionOptions}>
                 {renderCompressionOptions()}
             </div>
         )}

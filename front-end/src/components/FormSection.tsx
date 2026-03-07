@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import styles from '@/styles/FormSection.module.css';
 
 interface FormSectionProps {
     title?: string;
@@ -10,31 +11,10 @@ interface FormSectionProps {
 }
 
 const FormSection: React.FC<FormSectionProps> = ({ title, children, className, columns = 1 }) => {
-    const sectionStyle: React.CSSProperties = {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.4rem',
-        width: '100%'
-    };
-
-    const containerStyle: React.CSSProperties = {
-        display: 'grid',
-        gridTemplateColumns: columns === 2 ? '1fr 1fr' : '1fr',
-        gap: '1rem',
-        width: '100%'
-    };
-
-    const titleStyle: React.CSSProperties = {
-        fontWeight: 600,
-        fontSize: '0.85rem',
-        color: 'var(--secondary)',
-        marginBottom: '0.4rem'
-    };
-
     return (
-        <div style={sectionStyle} className={className}>
-            {title && <label style={titleStyle}>{title}</label>}
-            <div style={containerStyle}>
+        <div className={`${styles.section} ${className || ''}`}>
+            {title && <label className={styles.title}>{title}</label>}
+            <div className={columns === 2 ? styles.container2 : styles.container1}>
                 {children}
             </div>
         </div>

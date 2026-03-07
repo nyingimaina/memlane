@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import styles from '@/styles/CronBuilder.module.css';
 
 interface CronBuilderProps {
     value: string;
@@ -39,29 +40,9 @@ const CronBuilder: React.FC<CronBuilderProps> = ({ value, onChange }) => {
         onChange(val);
     };
 
-    const selectStyle: React.CSSProperties = {
-        padding: '0.75rem',
-        borderRadius: '8px',
-        border: '1px solid var(--border)',
-        background: 'var(--card-bg)',
-        color: 'var(--foreground)',
-        width: '100%',
-        cursor: 'pointer'
-    };
-
-    const inputStyle: React.CSSProperties = {
-        padding: '0.75rem',
-        borderRadius: '8px',
-        border: '1px solid var(--border)',
-        background: 'var(--card-bg)',
-        color: 'var(--foreground)',
-        width: '100%',
-        marginTop: '0.5rem'
-    };
-
     return (
-        <div style={{ width: '100%' }}>
-            <select value={selection} onChange={handleSelectChange} style={selectStyle}>
+        <div className={styles.container}>
+            <select value={selection} onChange={handleSelectChange} className={styles.select}>
                 {commonSchedules.map(s => (
                     <option key={s.label} value={s.value}>{s.label}</option>
                 ))}
@@ -72,7 +53,7 @@ const CronBuilder: React.FC<CronBuilderProps> = ({ value, onChange }) => {
                     value={customValue} 
                     onChange={handleCustomChange} 
                     placeholder="* * * * *" 
-                    style={inputStyle}
+                    className={styles.input}
                 />
             )}
         </div>
