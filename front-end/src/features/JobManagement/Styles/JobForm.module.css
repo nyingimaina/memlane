@@ -1,0 +1,37 @@
+@import "../../../styles/theme.module.css";
+
+.formContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1rem;
+}
+
+.header {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.checkboxGroup {
+    display: flex;
+    gap: 2rem;
+    padding: 0.5rem;
+    border-radius: 8px;
+    /* Uses theme logic implicitly via inheritance or direct class application in component */
+}
+
+.footer {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    marginTop: 1rem;
+}
+
+.checkboxLabel {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+}

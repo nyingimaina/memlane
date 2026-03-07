@@ -1,14 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import ZestTextbox from "jattac.libs.web.zest-textbox";
 import ZestButton from "jattac.libs.web.zest-button";
-import { JobMetadata, BackupJobConfiguration } from "@/models/Job";
+import { JobMetadata } from "@/models/Job";
 import TutorialIcon from "@/components/TutorialIcon";
 import CronBuilder from "@/components/CronBuilder";
 import DirectoryPicker from "@/components/DirectoryPicker";
 import FormSection from "@/components/FormSection";
 import { useUI } from "@/logic/UIContext";
+import { useJobForm } from "../Logic/useJobForm";
+
+import styles from "../Styles/JobForm.module.css";
+import theme from "../../../styles/theme.module.css";
 
 interface JobFormProps {
   initialJob?: JobMetadata;
@@ -22,60 +26,25 @@ const JobForm: React.FC<JobFormProps> = ({
   onCancel,
 }) => {
   const { triggerTutorial } = useUI();
-  const [name, setName] = useState(initialJob?.name || "");
-  const [cronExpression, setCronExpression] = useState(
-    initialJob?.cronExpression || "",
-  );
-  const [ignorePatterns, setIgnorePatterns] = useState(
-    initialJob?.ignorePatterns || "",
-  );
-
-  const initialConfig: BackupJobConfiguration = initialJob?.configurationJson
-    ? JSON.parse(initialJob.configurationJson)
-    : {
-        enableCompression: true,
-        skipIfNoChanges: true,
-        dbProvider: "None",
-        storageProvider: "Folder",
-        retentionCount: 5,
-      };
-
-  const [config, setConfig] = useState<BackupJobConfiguration>(initialConfig);
+  const { state, actions, prepareSubmitData } = useJobForm(initialJob);
 
   const handleSubmit = async () => {
-    await onSubmit({
-      name,
-      type: "Backup",
-      cronExpression: cronExpression || undefined,
-      ignorePatterns: ignorePatterns || undefined,
-      configurationJson: JSON.stringify({
-          ...config,
-          dbProvider: "None",
-          dbConnectionString: undefined
-      }),
-    });
+    const data = prepareSubmitData();
+    await onSubmit(data);
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.5rem",
-        padding: "1rem",
-      }}
-      className="job-form-container"
-    >
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+    <div className={styles.formContainer}>
+      <div className={styles.header}>
         <TutorialIcon onClick={triggerTutorial} />
       </div>
 
       <FormSection title="Pipeline Name" className="job-name-field">
         <ZestTextbox
           placeholder="e.g., My Personal Documents"
-          value={name}
+          value={state.name}
           zest={{
-            onTextChanged: (val) => setName(val || ""),
+            onTextChanged: (val) => actions.setName(val || ""),
             stretch: true,
           }}
         />
@@ -87,8 +56,8 @@ const JobForm: React.FC<JobFormProps> = ({
       >
         <DirectoryPicker
           placeholder="C:\Users\John\Documents"
-          value={config.sourceDirectory || ""}
-          onChange={(val) => setConfig({ ...config, sourceDirectory: val })}
+          value={state.config.sourceDirectory || ""}
+          onChange={(val) => actions.setConfig({ ...state.config, sourceDirectory: val })}
         />
       </FormSection>
 
@@ -102,9 +71,9 @@ const JobForm: React.FC<JobFormProps> = ({
           style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}
         >
           <select
-            value={config.storageProvider}
+            value={state.config.storageProvider}
             onChange={(e) =>
-              setConfig({ ...config, storageProvider: e.target.value })
+              actions.setConfig({ ...state.config, storageProvider: e.target.value })
             }
             style={{
               padding: "0.75rem",
@@ -124,30 +93,30 @@ const JobForm: React.FC<JobFormProps> = ({
         <div className="target-destination-field">
           <DirectoryPicker
             placeholder={
-              config.storageProvider === "S3"
+              state.config.storageProvider === "S3"
                 ? "my-bucket/backups"
                 : "D:\Backups"
             }
-            value={config.targetDestination || ""}
-            onChange={(val) => setConfig({ ...config, targetDestination: val })}
+            value={state.config.targetDestination || ""}
+            onChange={(val) => actions.setConfig({ ...state.config, targetDestination: val })}
           />
         </div>
       </FormSection>
 
       <FormSection title="Automation & Retention" columns={2}>
         <div className="cron-schedule-field">
-          <CronBuilder value={cronExpression} onChange={setCronExpression} />
+          <CronBuilder value={state.cronExpression} onChange={actions.setCronExpression} />
         </div>
 
-        {config.storageProvider !== "S3" && (
+        {state.config.storageProvider !== "S3" && (
           <div className="rotation-field">
             <ZestTextbox
               type="number"
-              value={config.retentionCount.toString()}
+              value={state.config.retentionCount.toString()}
               zest={{
                 onTextChanged: (val) =>
-                  setConfig({
-                    ...config,
+                  actions.setConfig({
+                    ...state.config,
                     retentionCount: parseInt(val || "0"),
                   }),
                 zSize: "md",
@@ -158,65 +127,27 @@ const JobForm: React.FC<JobFormProps> = ({
         )}
       </FormSection>
 
-      <div
-        style={{
-          display: "flex",
-          gap: "2rem",
-          padding: "0.5rem",
-          background: "var(--info-bg)",
-          borderRadius: "8px",
-        }}
-      >
-        <label
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            cursor: "pointer",
-          }}
-        >
+      <div className={`${styles.checkboxGroup} ${theme.infoBg}`}>
+        <label className={styles.checkboxLabel}>
           <input
             type="checkbox"
-            checked={config.enableCompression}
+            checked={state.config.enableCompression}
             onChange={(e) =>
-              setConfig({ ...config, enableCompression: e.target.checked })
+              actions.setConfig({ ...state.config, enableCompression: e.target.checked })
             }
           />
-          <span
-            style={{
-              fontWeight: 600,
-              fontSize: "0.85rem",
-              color: "var(--secondary)",
-            }}
-          >
-            Enable ZIP Compression
-          </span>
+          <span style={{ color: "var(--secondary)" }}>Enable ZIP Compression</span>
         </label>
 
-        <label
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            cursor: "pointer",
-          }}
-        >
+        <label className={styles.checkboxLabel}>
           <input
             type="checkbox"
-            checked={config.skipIfNoChanges}
+            checked={state.config.skipIfNoChanges}
             onChange={(e) =>
-              setConfig({ ...config, skipIfNoChanges: e.target.checked })
+              actions.setConfig({ ...state.config, skipIfNoChanges: e.target.checked })
             }
           />
-          <span
-            style={{
-              fontWeight: 600,
-              fontSize: "0.85rem",
-              color: "var(--secondary)",
-            }}
-          >
-            Skip if no changes
-          </span>
+          <span style={{ color: "var(--secondary)" }}>Skip if no changes</span>
         </label>
       </div>
 
@@ -226,22 +157,15 @@ const JobForm: React.FC<JobFormProps> = ({
       >
         <ZestTextbox
           placeholder="e.g., bin/&#10;obj/&#10;*.log&#10;node_modules/"
-          value={ignorePatterns}
+          value={state.ignorePatterns}
           zest={{
-            onTextChanged: (val) => setIgnorePatterns(val || ""),
+            onTextChanged: (val) => actions.setIgnorePatterns(val || ""),
             stretch: true,
           }}
         />
       </FormSection>
 
-      <div
-        style={{
-          display: "flex",
-          gap: "1rem",
-          justifyContent: "flex-end",
-          marginTop: "1rem",
-        }}
-      >
+      <div className={styles.footer}>
         <ZestButton
           onClick={onCancel}
           zest={{

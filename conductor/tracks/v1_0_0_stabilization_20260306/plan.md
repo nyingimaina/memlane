@@ -1,10 +1,10 @@
 # Implementation Plan: v1.0.0 Stabilization
 
 ## Phase 1: UI Simplification
-### [ ] Task: Hide Database Backup Options
-- [ ] Implement: Update `JobForm.tsx` to remove the Database/Directory toggle.
-- [ ] Implement: Remove the `jobCategory === 'Database'` conditional sections from `JobForm.tsx`.
-- [ ] Implement: Ensure `initialConfig` defaults to Directory-safe values.
+### [x] Task: Hide Database Backup Options
+- [x] Implement: Update `JobForm.tsx` to remove the Database/Directory toggle.
+- [x] Implement: Remove the `jobCategory === 'Database'` conditional sections from `JobForm.tsx`.
+- [x] Implement: Ensure `initialConfig` defaults to Directory-safe values.
 
 ## Phase 2: Windows Installer
 ### [ ] Task: Installer Strategy & Research
