@@ -2,9 +2,9 @@
 
 ## Phase 1: 7z Backend Integration
 ### [x] Task: 7z Provider & Execution Logic
-- [x] Implement: Create `SevenZipCommandLineProvider.cs` using `7-Zip.CommandLine` NuGet for cross-platform support.
-- [x] Implement: Add configuration options for compression levels (Fast, Normal, Ultra).
-- [x] Implement: Update `BackupJobOrchestrator` to use the new `ICompressionProvider` and `.7z` extension.
+- [x] Implement: Create `SevenZipProvider.cs` using `SevenZipSharp.Interop` for robust DLL-based compression.
+- [x] Implement: Implement Adapter Pattern with `ICompressionProvider` and `CompressionProviderFactory` to support Zip and 7z.
+- [x] Implement: Update `BackupJobOrchestrator` to use dynamic compression providers.
 
 ## Phase 2: Refined Pipeline Workflow
 ### [x] Task: Atomic Move & Cleanup

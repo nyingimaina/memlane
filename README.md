@@ -1,46 +1,24 @@
 # Memlane v1.0.0
 
-Memlane is a streamlined, rock-solid folder backup and synchronization utility. Built with a .NET 10 backend and a React (Next.js) frontend, it provides an at-a-glance dashboard for managing your critical data protection pipelines.
+Memlane is a simple folder backup and synchronization tool. It helps you keep your important files safe by managing automated backups through an easy-to-use dashboard.
 
-## Key Features (v1.0.0)
-- **Folder Backup & Sync:** Intelligent synchronization using SHA256 hashing to only copy changed files.
-- **Job Health Monitoring:** Jenkins-inspired weather icons (Sunny, Cloudy, Stormy) based on job stability.
-- **Smart Scheduling:** Full Cron-based scheduling for automated background backups.
-- **Ignore Patterns:** Full support for `.memignore` style patterns to exclude logs, temp files, and bulky directories.
-- **Retention Management:** Automated rotation of old backups to save disk space.
-- **Windows Integration:** Packaged as a standard Windows application via Inno Setup.
-
-## Getting Started (Development)
-
-### Prerequisites
-- .NET 10 SDK
-- Node.js (v18+)
-
-### Running the App
-1. **Start Backend:**
-   ```bash
-   cd back-end/Memlane.Api
-   dotnet run
-   ```
-2. **Start Frontend:**
-   ```bash
-   cd front-end
-   npm install
-   npm run dev
-   ```
-3. Open `http://localhost:3000`
-
-## Deployment & Installation
-
-Memlane can be built into a standalone Windows installer using the provided scripts in the `deployment/` folder.
-
-1. **Publish:** Run `deployment/publish.ps1` from PowerShell. This will bundle the frontend into the backend's `wwwroot` and publish a self-contained executable.
-2. **Pack:** Open `deployment/Memlane.iss` in **Inno Setup** and click 'Compile'.
-3. **Install:** Run the generated `MemlaneSetup_v1.0.0.exe`.
-
-## Project Architecture
-- **Vertical Slice Architecture:** UI, Logic, and Data for each feature are co-located for maximum maintainability.
-- **Modern Tech Stack:** .NET 10, Dapper (SQLite), Next.js 14, SignalR (Real-time updates).
+## Key Features
+- **Complete Backups:** Automatically detects if any file in your folder has changed. If a change is found, it performs a full backup of the entire folder.
+- **Status at a Glance:** Clear weather-style icons show you exactly how healthy your backup history is.
+- **Automatic Scheduling:** Set your backups to run on a schedule that works for you.
+- **Skip Unnecessary Files:** Define patterns to exclude temporary files or large folders from your backups.
+- **Storage Management:** Automatically removes older backups to save space on your computer.
+- **Easy Windows Setup:** Comes with a standard installer for a quick and simple setup.
 
 ---
-*Developed with love for data integrity.*
+## License & Terms of Use
+
+**IMPORTANT: READ CAREFULLY**
+
+Memlane is provided **"AS IS"**, without warranty of any kind, express or implied. By using this software, you agree that:
+
+1. **NO LIABILITY FOR DATA LOSS:** The developers shall not be liable for any data loss, corruption, or hardware damage resulting from the use of this software. It is your responsibility to verify your backups.
+2. **USE AT YOUR OWN RISK:** This is a powerful tool. Improper configuration (such as choosing the wrong folders) can result in files being deleted or overwritten.
+3. **NO GUARANTEE OF SUCCESS:** While the software checks for changes to ensure files are backed up, external factors (like disk errors or computer issues) may still cause a backup to fail.
+
+*By installing Memlane, you acknowledge these risks and agree to protect the developers from any legal claims or damages.*

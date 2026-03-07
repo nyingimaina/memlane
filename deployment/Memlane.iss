@@ -39,6 +39,12 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+; Add Firewall Rule
+Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall add rule name=""Memlane API"" dir=in action=allow protocol=TCP localport=5237"; Flags: runhidden
+
+[UninstallRun]
+; Remove Firewall Rule
+Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""Memlane API"""; Flags: runhidden
 
 [UninstallDelete]
 Type: files; Name: "{app}\memlane.db"

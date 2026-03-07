@@ -53,51 +53,69 @@ namespace Memlane.Api.Services
             }).ToArray();
 
             if (ignoredCount > 0) {
-                logger?.Invoke($"[FileSync] Ignored {ignoredCount} files based on patterns.");
+                logger?.Invoke($"[FileSync] Respecting .memignore: {ignoredCount} files excluded.");
             }
 
+            // --- ALL-OR-NOTHING DETECTION ---
+            bool anyChangeDetected = false;
             var targetFiles = Directory.GetFiles(targetDir, "*", SearchOption.AllDirectories);
-            
-            int filesSynced = 0;
-            bool changesDetected = false;
 
-            logger?.Invoke($"Scanning {sourceFiles.Length} source files...");
-
-            // 1. Check for New or Changed Files
-            foreach (var sourceFile in sourceFiles)
+            // 1. Check if counts differ (immediate change detection)
+            if (sourceFiles.Length != targetFiles.Length)
             {
-                var relativePath = Path.GetRelativePath(sourceDir, sourceFile);
-                var targetFile = Path.Combine(targetDir, relativePath);
+                anyChangeDetected = true;
+                logger?.Invoke($"[FileSync] File count mismatch (Source: {sourceFiles.Length}, Last Backup: {targetFiles.Length}).");
+            }
 
-                if (await ShouldSyncAsync(sourceFile, targetFile, logger))
+            // 2. Check for individual file changes if counts matched
+            if (!anyChangeDetected)
+            {
+                foreach (var sourceFile in sourceFiles)
                 {
-                    changesDetected = true;
+                    var relativePath = Path.GetRelativePath(sourceDir, sourceFile);
+                    var targetFile = Path.Combine(targetDir, relativePath);
+
+                    if (await ShouldSyncAsync(sourceFile, targetFile, null)) // Pass null logger to stay quiet during detection
+                    {
+                        anyChangeDetected = true;
+                        logger?.Invoke($"[FileSync] Change detected in: {relativePath}");
+                        break;
+                    }
+                }
+            }
+
+            if (anyChangeDetected)
+            {
+                logger?.Invoke("[FileSync] One or more changes found. Performing a FULL fresh mirror...");
+                
+                // Clear existing workspace to ensure "all or nothing" fresh state
+                if (Directory.Exists(targetDir))
+                {
+                    Directory.Delete(targetDir, true);
+                    Directory.CreateDirectory(targetDir);
+                }
+
+                int filesSynced = 0;
+                foreach (var sourceFile in sourceFiles)
+                {
+                    var relativePath = Path.GetRelativePath(sourceDir, sourceFile);
+                    var targetFile = Path.Combine(targetDir, relativePath);
+                    
                     var targetSubDir = Path.GetDirectoryName(targetFile);
                     if (targetSubDir != null && !Directory.Exists(targetSubDir))
                     {
                         Directory.CreateDirectory(targetSubDir);
                     }
+
                     File.Copy(sourceFile, targetFile, true);
                     filesSynced++;
                 }
+
+                return new SyncResult(true, sourceFiles.Length, filesSynced);
             }
 
-            // 2. Check for Deleted Files (Clean up the sync workspace)
-            foreach (var targetFile in targetFiles)
-            {
-                var relativePath = Path.GetRelativePath(targetDir, targetFile);
-                var sourceFile = Path.Combine(sourceDir, relativePath);
-
-                // If file no longer exists in source OR it is now ignored, remove from sync workspace
-                if (!File.Exists(sourceFile) || IsIgnored(relativePath, patterns))
-                {
-                    logger?.Invoke($"[FileSync] Removing {relativePath} from workspace (deleted or ignored).");
-                    File.Delete(targetFile);
-                    changesDetected = true;
-                }
-            }
-
-            return new SyncResult(changesDetected, sourceFiles.Length, filesSynced);
+            logger?.Invoke("[FileSync] No changes detected. Workspace is identical to source.");
+            return new SyncResult(false, sourceFiles.Length, 0);
         }
 
         private bool IsIgnored(string relativePath, List<string> patterns)
