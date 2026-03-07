@@ -54,4 +54,5 @@ export interface BackupJobConfiguration {
     archiveFileName?: string;
     skipIfNoChanges: boolean;
     retentionCount: number;
+    compressionLevel?: "Fastest" | "Fast" | "Normal" | "Maximum" | "Ultra";
 }

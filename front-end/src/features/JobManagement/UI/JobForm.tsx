@@ -136,8 +136,31 @@ const JobForm: React.FC<JobFormProps> = ({
               actions.setConfig({ ...state.config, enableCompression: e.target.checked })
             }
           />
-          <span style={{ color: "var(--secondary)" }}>Enable ZIP Compression</span>
+          <span style={{ color: "var(--secondary)" }}>Enable 7z Compression</span>
         </label>
+
+        {state.config.enableCompression && (
+          <select
+            value={state.config.compressionLevel || "Normal"}
+            onChange={(e) =>
+              actions.setConfig({ ...state.config, compressionLevel: e.target.value as any })
+            }
+            style={{ 
+              padding: "0.4rem", 
+              borderRadius: "6px", 
+              border: "1px solid var(--border)", 
+              background: "var(--card-bg)", 
+              color: "var(--foreground)",
+              fontSize: "0.85rem"
+            }}
+          >
+            <option value="Fastest">Fastest</option>
+            <option value="Fast">Fast</option>
+            <option value="Normal">Normal</option>
+            <option value="Maximum">Maximum</option>
+            <option value="Ultra">Ultra</option>
+          </select>
+        )}
 
         <label className={styles.checkboxLabel}>
           <input

@@ -140,28 +140,54 @@ namespace Memlane.Api.Services
                 }
 
                 // 5. Filename Generation & Compression
-                string finalArtifactPath = artifactWorkspace;
+                string finalArchiveFile = "";
                 string extension = config.EnableCompression ? ".7z" : "";
                 string fileName = _filenameGenerator.Generate(job.Name, extension);
                 
                 if (config.EnableCompression)
                 {
-                    var sevenZipPath = Path.Combine(Path.GetTempPath(), fileName);
-                    await runLogger.LogAsync($"[Compression] Packaging artifacts into 7z archive (mx=5)...", 70);
-                    await _compressionProvider.CompressAsync(artifactWorkspace, sevenZipPath, "Normal", async (msg) => await runLogger.LogAsync(msg));
-                    finalArtifactPath = sevenZipPath;
-                    await runLogger.LogAsync($"[Compression] Done. Archive size: {new FileInfo(finalArtifactPath).Length / 1024} KB");
+                    // Create in a specific temp compression folder
+                    var compressionDir = Path.Combine(Path.GetTempPath(), "Memlane", "Compression", Guid.NewGuid().ToString().Substring(0, 8));
+                    if (!Directory.Exists(compressionDir)) Directory.CreateDirectory(compressionDir);
+                    
+                    var tempArchivePath = Path.Combine(compressionDir, fileName);
+                    
+                    await runLogger.LogAsync($"[Compression] Packaging artifacts into 7z archive ({config.CompressionLevel ?? "Normal"} level)...", 70);
+                    try {
+                        await _compressionProvider.CompressAsync(artifactWorkspace, tempArchivePath, config.CompressionLevel ?? "Normal", async (msg) => await runLogger.LogAsync(msg));
+                        finalArchiveFile = tempArchivePath;
+                        await runLogger.LogAsync($"[Compression] Successfully created: {fileName} ({new FileInfo(finalArchiveFile).Length / 1024} KB)");
+                    } catch (Exception ex) {
+                        if (Directory.Exists(compressionDir)) Directory.Delete(compressionDir, true);
+                        throw new Exception($"Compression failed: {ex.Message}", ex);
+                    }
                 }
 
-                // 6. Storage Provider
+                // 6. Storage Provider (Move to Final Destination)
                 if (!string.IsNullOrEmpty(config.StorageProvider) && !string.IsNullOrEmpty(targetDest))
                 {
                     var storage = _storageProviderFactory.GetProvider(config.StorageProvider);
                     var targetPath = Path.Combine(targetDest, fileName);
 
-                    await runLogger.LogAsync($"[Storage] Sending to {storage.ProviderName} destination: {targetDest}...", 90);
-                    await storage.SaveAsync(finalArtifactPath, targetPath);
-                    await runLogger.LogAsync($"[Storage] Successfully saved as: {fileName}");
+                    if (config.EnableCompression)
+                    {
+                        await runLogger.LogAsync($"[Storage] Moving archive to {storage.ProviderName} destination: {targetDest}...", 90);
+                        await storage.SaveAsync(finalArchiveFile, targetPath);
+                        
+                        // Cleanup temp archive and its directory
+                        if (File.Exists(finalArchiveFile)) File.Delete(finalArchiveFile);
+                        var compressionDir = Path.GetDirectoryName(finalArchiveFile);
+                        if (compressionDir != null && Directory.Exists(compressionDir)) Directory.Delete(compressionDir, true);
+                    }
+                    else
+                    {
+                        await runLogger.LogAsync($"[Storage] Mirroring workspace to {storage.ProviderName} destination: {targetDest}...", 90);
+                        // For non-compressed, we mirror the artifact workspace (which is a copy of sync workspace)
+                        // This might be redundant if sync workspace is already persistent, but ensures "Pick -> Move"
+                        await storage.SaveAsync(artifactWorkspace, targetPath); 
+                    }
+
+                    await runLogger.LogAsync($"[Storage] Successfully secured: {fileName}");
 
                     // 7. Backup Rotation
                     if (config.RetentionCount > 0 && (config.StorageProvider == "Local" || config.StorageProvider == "Folder"))
@@ -169,10 +195,9 @@ namespace Memlane.Api.Services
                         await runLogger.LogAsync($"[Rotation] Applying retention policy: Keep last {config.RetentionCount} backups...", 95);
                         await _retentionManager.RotateBackupsAsync(targetDest, config.RetentionCount);
                     }
-
-                    if (config.EnableCompression && File.Exists(finalArtifactPath)) File.Delete(finalArtifactPath);
                 }
 
+                // Final Cleanup of temp workspaces
                 if (Directory.Exists(artifactWorkspace)) Directory.Delete(artifactWorkspace, true);
 
                 await runLogger.LogAsync(">>> RESULT: Pipeline finished successfully.", 100);
@@ -278,5 +303,8 @@ namespace Memlane.Api.Services
         
         [JsonPropertyName("retentionCount")]
         public int RetentionCount { get; set; }
+
+        [JsonPropertyName("compressionLevel")]
+        public string? CompressionLevel { get; set; }
     }
 }

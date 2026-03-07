@@ -7,11 +7,13 @@
 - [x] Implement: Update `BackupJobOrchestrator` to use the new `ICompressionProvider` and `.7z` extension.
 
 ## Phase 2: Refined Pipeline Workflow
-### [ ] Task: Atomic Move & Cleanup
-- [ ] Implement: Logic to ensure archives are moved only after successful compression.
-- [ ] Implement: Strict temporary file cleanup to prevent disk bloat.
+### [x] Task: Atomic Move & Cleanup
+- [x] Implement: Logic to ensure archives are moved only after successful compression using specific temp folders.
+- [x] Implement: Strict temporary file cleanup for both compression workspace and artifact assembly.
 
 ## Phase 3: Frontend Enhancements
-### [ ] Task: Advanced Compression UI
-- [ ] Implement: Update `JobForm` to include 7z-specific settings.
-- [ ] Implement: Real-time progress reporting for the compression phase via SignalR.
+### [x] Task: Advanced Compression UI
+- [x] Implement: Update `JobForm` to include 7z-specific settings (Compression Level dropdown).
+- [x] Implement: Real-time progress reporting for the compression phase via SignalR (integrated into existing flow).
+
+- [ ] Task: Conductor - User Manual Verification 'Phase 1: Advanced Pipeline' (Protocol in workflow.md)
