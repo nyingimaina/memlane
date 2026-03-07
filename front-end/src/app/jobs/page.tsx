@@ -4,7 +4,7 @@ import React, { useEffect, useCallback } from 'react';
 import { useJobLogic } from '@/logic/useJobLogic';
 import { useUI } from '@/logic/UIContext';
 import JobsTable from '@/components/JobsTable';
-import JobForm from '@/components/JobForm';
+import JobForm from '@/features/JobManagement/UI/JobForm';
 import JobHistoryList from '@/components/JobHistoryList';
 import RunLogViewer from '@/components/RunLogViewer';
 import ZestButton from 'jattac.libs.web.zest-button';
