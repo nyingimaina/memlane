@@ -145,6 +145,7 @@ namespace Memlane.Api.Services
                 
                 if (config.EnableCompression)
                 {
+                    await runLogger.LogAsync($"[Compression] Detected Type: '{config.CompressionType ?? "Zip"}'", 65);
                     var compressionProvider = _compressionProviderFactory.GetProvider(config.CompressionType);
                     string extension = compressionProvider.DefaultExtension;
                     fileName = _filenameGenerator.Generate(job.Name, extension);
