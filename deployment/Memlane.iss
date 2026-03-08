@@ -1,6 +1,6 @@
 ; Memlane Inno Setup Script
 #define MyAppName "Memlane"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.1.0"
 #define MyAppPublisher "Memlane Team"
 #define MyAppURL "https://github.com/nyingi/Memlane"
 #define MyAppExeName "Memlane.Api.exe"

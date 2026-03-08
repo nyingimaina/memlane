@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { JobMetadata, BackupJobConfiguration } from '@/models/Job';
+import { getTemplateForProvider } from '@/logic/ConnectionStringTemplates';
+
+type JobCategory = 'Database' | 'Directory';
 
 export const useJobForm = (initialJob?: JobMetadata) => {
     const [name, setName] = useState(initialJob?.name || '');
@@ -19,6 +22,28 @@ export const useJobForm = (initialJob?: JobMetadata) => {
         };
 
     const [config, setConfig] = useState<BackupJobConfiguration>(initialConfig);
+    const [jobCategory, setJobCategory] = useState<JobCategory>(
+        initialConfig.dbProvider && initialConfig.dbProvider !== 'None' ? 'Database' : 'Directory'
+    );
+
+    const handleCategoryChange = (category: JobCategory) => {
+        setJobCategory(category);
+        if (category === 'Directory') {
+            setConfig({ ...config, dbProvider: 'None', dbConnectionString: undefined });
+        } else {
+            const defaultProvider = config.dbProvider === 'None' ? 'SQL Server' : config.dbProvider;
+            setConfig({ 
+                ...config, 
+                dbProvider: defaultProvider,
+                dbConnectionString: config.dbConnectionString || getTemplateForProvider(defaultProvider || 'SQL Server')
+            });
+        }
+    };
+
+    const handleProviderChange = (provider: string) => {
+        const template = getTemplateForProvider(provider);
+        setConfig({ ...config, dbProvider: provider, dbConnectionString: template });
+    };
 
     const prepareSubmitData = () => {
         return {
@@ -26,11 +51,7 @@ export const useJobForm = (initialJob?: JobMetadata) => {
             type: 'Backup',
             cronExpression: cronExpression || undefined,
             ignorePatterns: ignorePatterns || undefined,
-            configurationJson: JSON.stringify({
-                ...config,
-                dbProvider: 'None', // Enforced for v1.0.0
-                dbConnectionString: undefined
-            })
+            configurationJson: JSON.stringify(config)
         };
     };
 
@@ -39,13 +60,16 @@ export const useJobForm = (initialJob?: JobMetadata) => {
             name,
             cronExpression,
             ignorePatterns,
-            config
+            config,
+            jobCategory
         },
         actions: {
             setName,
             setCronExpression,
             setIgnorePatterns,
-            setConfig
+            setConfig,
+            handleCategoryChange,
+            handleProviderChange
         },
         prepareSubmitData
     };

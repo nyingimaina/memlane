@@ -1,4 +1,4 @@
-# Memlane Build & Publish Script for v1.0.0
+# Memlane Build & Publish Script for v1.1.0
 
 $ErrorActionPreference = "Stop"
 

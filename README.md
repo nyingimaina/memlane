@@ -1,4 +1,4 @@
-# Memlane v1.0.0
+# Memlane v1.1.0
 
 Memlane is a simple folder backup and synchronization tool. It helps you keep your important files safe by managing automated backups through an easy-to-use dashboard.
 

@@ -54,15 +54,43 @@ const JobForm: React.FC<JobFormProps> = ({
     }
   };
 
+  const categoryButtonStyle = (active: boolean): React.CSSProperties => ({
+    flex: 1, 
+    padding: '0.6rem', 
+    border: 'none', 
+    borderRadius: '10px',
+    cursor: 'pointer',
+    fontWeight: 600,
+    backgroundColor: active ? '#ffffff' : 'transparent',
+    color: active ? '#4361ee' : '#64748b',
+    boxShadow: active ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
+    transition: 'all 0.2s'
+  });
+
   return (
     <div className={`${styles.formContainer} ${theme.visibilityProvider}`}>
       <div className={styles.header}>
         <TutorialIcon onClick={triggerTutorial} />
       </div>
 
+      <div style={{ display: 'flex', background: '#f8fafc', borderRadius: '12px', padding: '0.25rem', marginBottom: '1rem' }}>
+        <button 
+            onClick={() => actions.handleCategoryChange('Database')}
+            style={categoryButtonStyle(state.jobCategory === 'Database')}
+        >
+            Database Backup
+        </button>
+        <button 
+            onClick={() => actions.handleCategoryChange('Directory')}
+            style={categoryButtonStyle(state.jobCategory === 'Directory')}
+        >
+            Directory Backup
+        </button>
+      </div>
+
       <FormSection title="Pipeline Name" className="job-name-field">
         <ZestTextbox
-          placeholder="e.g., My Personal Documents"
+          placeholder={state.jobCategory === 'Database' ? "e.g., Production SQL Server" : "e.g., My Personal Documents"}
           value={state.name}
           zest={{
             onTextChanged: (val) => actions.setName(val || ""),
@@ -71,12 +99,38 @@ const JobForm: React.FC<JobFormProps> = ({
         />
       </FormSection>
 
+      {state.jobCategory === 'Database' && (
+        <FormSection title="Database Source" columns={2}>
+            <div className="database-provider-field">
+                <select 
+                    className={styles.storageProviderSelect}
+                    value={state.config.dbProvider} 
+                    onChange={(e) => actions.handleProviderChange(e.target.value)}
+                >
+                    <option value="SQL Server">SQL Server</option>
+                    <option value="MariaDB">MariaDB</option>
+                </select>
+            </div>
+
+            <div className="connection-string-field">
+                <ZestTextbox 
+                    placeholder="Server=...;Database=...;"
+                    value={state.config.dbConnectionString || ''}
+                    zest={{ 
+                        onTextChanged: (val) => actions.setConfig({ ...state.config, dbConnectionString: val }),
+                        stretch: true
+                    }}
+                />
+            </div>
+        </FormSection>
+      )}
+
       <FormSection
-        title="Source Directory"
+        title={state.jobCategory === 'Database' ? 'Source Directory (Optional Sync)' : 'Source Directory'} 
         className="source-directory-field"
       >
         <DirectoryPicker
-          placeholder="C:\Users\John\Documents"
+          placeholder="C:\Data\Files"
           value={state.config.sourceDirectory || ""}
           onChange={(val) => actions.setConfig({ ...state.config, sourceDirectory: val })}
         />
