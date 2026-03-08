@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "Pi4vi+iowxg=",
+  "dgSpecHash": "dVCLJ3nAomE=",
   "success": true,
   "projectFilePath": "D:\\work\\nyingi\\code\\Memlane\\back-end\\Memlane.Api\\Memlane.Api.csproj",
   "expectedPackageFiles": [
@@ -27,8 +27,6 @@
     "C:\\Users\\nying\\.nuget\\packages\\mysqlconnector\\2.5.0\\mysqlconnector.2.5.0.nupkg.sha512",
     "C:\\Users\\nying\\.nuget\\packages\\polly\\8.6.5\\polly.8.6.5.nupkg.sha512",
     "C:\\Users\\nying\\.nuget\\packages\\polly.core\\8.6.5\\polly.core.8.6.5.nupkg.sha512",
-    "C:\\Users\\nying\\.nuget\\packages\\sevenzipsharp\\0.64.0\\sevenzipsharp.0.64.0.nupkg.sha512",
-    "C:\\Users\\nying\\.nuget\\packages\\sevenzipsharp.interop\\19.1.0\\sevenzipsharp.interop.19.1.0.nupkg.sha512",
     "C:\\Users\\nying\\.nuget\\packages\\sqlitepclraw.bundle_e_sqlite3\\2.1.11\\sqlitepclraw.bundle_e_sqlite3.2.1.11.nupkg.sha512",
     "C:\\Users\\nying\\.nuget\\packages\\sqlitepclraw.core\\2.1.11\\sqlitepclraw.core.2.1.11.nupkg.sha512",
     "C:\\Users\\nying\\.nuget\\packages\\sqlitepclraw.lib.e_sqlite3\\2.1.11\\sqlitepclraw.lib.e_sqlite3.2.1.11.nupkg.sha512",
@@ -38,20 +36,8 @@
     "C:\\Users\\nying\\.nuget\\packages\\system.identitymodel.tokens.jwt\\7.7.1\\system.identitymodel.tokens.jwt.7.7.1.nupkg.sha512",
     "C:\\Users\\nying\\.nuget\\packages\\system.memory.data\\8.0.1\\system.memory.data.8.0.1.nupkg.sha512",
     "C:\\Users\\nying\\.nuget\\packages\\system.security.cryptography.pkcs\\9.0.11\\system.security.cryptography.pkcs.9.0.11.nupkg.sha512",
-    "C:\\Users\\nying\\.nuget\\packages\\system.security.cryptography.protecteddata\\9.0.11\\system.security.cryptography.protecteddata.9.0.11.nupkg.sha512"
+    "C:\\Users\\nying\\.nuget\\packages\\system.security.cryptography.protecteddata\\9.0.11\\system.security.cryptography.protecteddata.9.0.11.nupkg.sha512",
+    "C:\\Users\\nying\\.nuget\\packages\\zstdsharp.port\\0.8.7\\zstdsharp.port.0.8.7.nupkg.sha512"
   ],
-  "logs": [
-    {
-      "code": "NU1701",
-      "level": "Warning",
-      "message": "Package 'SevenZipSharp 0.64.0' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net10.0'. This package may not be fully compatible with your project.",
-      "projectPath": "D:\\work\\nyingi\\code\\Memlane\\back-end\\Memlane.Api\\Memlane.Api.csproj",
-      "warningLevel": 1,
-      "filePath": "D:\\work\\nyingi\\code\\Memlane\\back-end\\Memlane.Api\\Memlane.Api.csproj",
-      "libraryId": "SevenZipSharp",
-      "targetGraphs": [
-        "net10.0"
-      ]
-    }
-  ]
+  "logs": []
 }

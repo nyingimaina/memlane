@@ -146,4 +146,4 @@ D:\work\nyingi\code\Memlane\back-end\Memlane.Api\obj\Debug\net10.0\compressed\ik
 D:\work\nyingi\code\Memlane\back-end\Memlane.Api\obj\Debug\net10.0\compressed\gx709ok1qi-{0}-lrz080geda-lrz080geda.gz
 D:\work\nyingi\code\Memlane\back-end\Memlane.Api\obj\Debug\net10.0\compressed\uh5k6mwe0e-{0}-oyhze981s1-oyhze981s1.gz
 D:\work\nyingi\code\Memlane\back-end\Memlane.Api\obj\Debug\net10.0\compressed\2voov8bl67-{0}-jtojrcy382-jtojrcy382.gz
-D:\work\nyingi\code\Memlane\back-end\Memlane.Api\bin\Debug\net10.0\SevenZipSharp.dll
+D:\work\nyingi\code\Memlane\back-end\Memlane.Api\bin\Debug\net10.0\ZstdSharp.dll

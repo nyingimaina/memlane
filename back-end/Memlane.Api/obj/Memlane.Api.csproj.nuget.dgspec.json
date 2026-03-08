@@ -72,9 +72,9 @@
               "target": "Package",
               "version": "[8.6.5, )"
             },
-            "SevenZipSharp.Interop": {
+            "ZstdSharp.Port": {
               "target": "Package",
-              "version": "[19.1.0, )"
+              "version": "[0.8.7, )"
             }
           },
           "imports": [

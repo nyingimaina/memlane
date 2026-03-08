@@ -417,24 +417,6 @@
           }
         }
       },
-      "SevenZipSharp/0.64.0": {
-        "type": "package",
-        "compile": {
-          "lib/SevenZipSharp.dll": {}
-        },
-        "runtime": {
-          "lib/SevenZipSharp.dll": {}
-        }
-      },
-      "SevenZipSharp.Interop/19.1.0": {
-        "type": "package",
-        "dependencies": {
-          "SevenZipSharp": "0.64.0"
-        },
-        "build": {
-          "build/SevenZipSharp.Interop.targets": {}
-        }
-      },
       "SQLitePCLRaw.bundle_e_sqlite3/2.1.11": {
         "type": "package",
         "dependencies": {
@@ -679,6 +661,15 @@
         },
         "build": {
           "buildTransitive/net8.0/_._": {}
+        }
+      },
+      "ZstdSharp.Port/0.8.7": {
+        "type": "package",
+        "compile": {
+          "lib/net9.0/ZstdSharp.dll": {}
+        },
+        "runtime": {
+          "lib/net9.0/ZstdSharp.dll": {}
         }
       }
     }
@@ -1231,32 +1222,6 @@
         "polly.core.nuspec"
       ]
     },
-    "SevenZipSharp/0.64.0": {
-      "sha512": "CbjNb+ZcJWzoRM4uA+UXEklUwu2Fm+zbo6FNB8emaQFpJUlliwTDVl4vs6/PbFiGygRMvv30yKwCMVZJeMx4KA==",
-      "type": "package",
-      "path": "sevenzipsharp/0.64.0",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "lib/SevenZipSharp.dll",
-        "sevenzipsharp.0.64.0.nupkg.sha512",
-        "sevenzipsharp.nuspec"
-      ]
-    },
-    "SevenZipSharp.Interop/19.1.0": {
-      "sha512": "fOz/rhB5GRClbigCcpogg4Zbv7ErMjsGysVAeaSxg8/yYsth5sjqv5c4Zxg4pvvbfn4PC1ueMSS65plqZTcMUQ==",
-      "type": "package",
-      "path": "sevenzipsharp.interop/19.1.0",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "build/SevenZipSharp.Interop.targets",
-        "build/x64/7z.dll",
-        "build/x86/7z.dll",
-        "sevenzipsharp.interop.19.1.0.nupkg.sha512",
-        "sevenzipsharp.interop.nuspec"
-      ]
-    },
     "SQLitePCLRaw.bundle_e_sqlite3/2.1.11": {
       "sha512": "DC4nA7yWnf4UZdgJDF+9Mus4/cb0Y3Sfgi3gDnAoKNAIBwzkskNAbNbyu+u4atT0ruVlZNJfwZmwiEwE5oz9LQ==",
       "type": "package",
@@ -1519,6 +1484,26 @@
         "system.security.cryptography.protecteddata.nuspec",
         "useSharedDesignerContext.txt"
       ]
+    },
+    "ZstdSharp.Port/0.8.7": {
+      "sha512": "+4VpxvzEKaHpfTjsLRMhQHx6brqGBkIA+fjUM3wUW8ZoWpPFAeKrO2Nf4uZDeBjjzNDNxSRvLQH4b3S9Ku4JJQ==",
+      "type": "package",
+      "path": "zstdsharp.port/0.8.7",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net462/ZstdSharp.dll",
+        "lib/net5.0/ZstdSharp.dll",
+        "lib/net6.0/ZstdSharp.dll",
+        "lib/net7.0/ZstdSharp.dll",
+        "lib/net8.0/ZstdSharp.dll",
+        "lib/net9.0/ZstdSharp.dll",
+        "lib/netcoreapp3.1/ZstdSharp.dll",
+        "lib/netstandard2.0/ZstdSharp.dll",
+        "lib/netstandard2.1/ZstdSharp.dll",
+        "zstdsharp.port.0.8.7.nupkg.sha512",
+        "zstdsharp.port.nuspec"
+      ]
     }
   },
   "projectFileDependencyGroups": {
@@ -1530,7 +1515,7 @@
       "Microsoft.Data.Sqlite >= 10.0.3",
       "MySqlConnector >= 2.5.0",
       "Polly >= 8.6.5",
-      "SevenZipSharp.Interop >= 19.1.0"
+      "ZstdSharp.Port >= 0.8.7"
     ]
   },
   "packageFolders": {
@@ -1604,9 +1589,9 @@
             "target": "Package",
             "version": "[8.6.5, )"
           },
-          "SevenZipSharp.Interop": {
+          "ZstdSharp.Port": {
             "target": "Package",
-            "version": "[19.1.0, )"
+            "version": "[0.8.7, )"
           }
         },
         "imports": [
@@ -2045,17 +2030,5 @@
         }
       }
     }
-  },
-  "logs": [
-    {
-      "code": "NU1701",
-      "level": "Warning",
-      "warningLevel": 1,
-      "message": "Package 'SevenZipSharp 0.64.0' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net10.0'. This package may not be fully compatible with your project.",
-      "libraryId": "SevenZipSharp",
-      "targetGraphs": [
-        "net10.0"
-      ]
-    }
-  ]
+  }
 }

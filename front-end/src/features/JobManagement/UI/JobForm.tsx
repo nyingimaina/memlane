@@ -12,7 +12,7 @@ import { useUI } from "@/logic/UIContext";
 import { useJobForm } from "../Logic/useJobForm";
 
 import ZipOptions from "./CompressionOptions/ZipOptions";
-import SevenZipOptions from "./CompressionOptions/SevenZipOptions";
+import ZstdOptions from "./CompressionOptions/ZstdOptions";
 
 import styles from "../Styles/JobForm.module.css";
 import theme from "../../../styles/theme.module.css";
@@ -37,15 +37,15 @@ const JobForm: React.FC<JobFormProps> = ({
   };
 
   const renderCompressionOptions = () => {
-    const type = state.config.compressionType || "Zip";
+    const type = state.config.compressionType || "Zstandard";
     switch (type) {
       case "Zip":
         return <ZipOptions 
                   optionsJson={state.config.compressionOptionsJson} 
                   onChange={(json) => actions.setConfig({ ...state.config, compressionOptionsJson: json })} 
                />;
-      case "7-Zip":
-        return <SevenZipOptions 
+      case "Zstandard":
+        return <ZstdOptions 
                   optionsJson={state.config.compressionOptionsJson} 
                   onChange={(json) => actions.setConfig({ ...state.config, compressionOptionsJson: json })} 
                />;
@@ -154,13 +154,13 @@ const JobForm: React.FC<JobFormProps> = ({
             {state.config.enableCompression && (
             <select
                 className={styles.typeSelect}
-                value={state.config.compressionType || "Zip"}
+                value={state.config.compressionType || "Zstandard"}
                 onChange={(e) =>
                 actions.setConfig({ ...state.config, compressionType: e.target.value })
                 }
             >
+                <option value="Zstandard">High-Ratio Zstandard</option>
                 <option value="Zip">Standard ZIP</option>
-                <option value="7-Zip">High-Ratio 7z</option>
             </select>
             )}
         </div>
