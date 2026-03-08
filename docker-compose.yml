@@ -1,0 +1,12 @@
+services:
+  memlane:
+    build: .
+    container_name: memlane
+    ports:
+      - "5237:5237"
+    volumes:
+      - ./data:/data
+      - ./backups:/backups
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    restart: unless-stopped

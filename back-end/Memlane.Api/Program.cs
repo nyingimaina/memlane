@@ -8,6 +8,18 @@ using Cronos;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Support for running as a Windows Service
+builder.Host.UseWindowsService(options =>
+{
+    options.ServiceName = "Memlane Backup Service";
+});
+
+// Fix content root when running as a service
+if (OperatingSystem.IsWindows())
+{
+    builder.WebHost.UseContentRoot(AppContext.BaseDirectory);
+}
+
 // Ensure the application runs on port 5237
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {

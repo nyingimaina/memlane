@@ -92,7 +92,7 @@ const JobsTable: React.FC<JobsTableProps> = ({ jobs, onTrigger, onEdit, onDelete
                 const menuItems: IOverflowMenuItem[] = [
                     {
                         content: (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <div className="manual-trigger-btn" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <FaPlay style={{ color: 'var(--success)' }} /> Run Now
                             </div>
                         ),

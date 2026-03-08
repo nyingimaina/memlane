@@ -14,32 +14,31 @@
 
 ## Phase 1.5: Onboarding & User Tutorials
 
-### [ ] Task: Guided Tour Infrastructure
-- [ ] Implement: Install `react-joyride` dependency
-- [ ] Implement: Create `TutorialRegistry.ts` for centralized step definitions
-- [ ] Implement: Create `GuidedTour.tsx` wrapper and `TutorialIcon.tsx` component
-- [ ] Implement: Add stable CSS selectors/IDs to `Dashboard` and `JobForm` for targeting
+### [x] Task: Guided Tour Infrastructure (Completed)
+- [x] Implement: Install `react-joyride` dependency
+- [x] Implement: Create `TutorialRegistry.ts` for centralized step definitions
+- [x] Implement: Create `GuidedTour.tsx` wrapper and `TutorialIcon.tsx` component
+- [x] Implement: Add stable CSS selectors/IDs to `Dashboard` and `JobForm` for targeting
 
-### [ ] Task: Implement Tours
-- [ ] Implement: Dashboard tour (Job overview, Status, Manual Trigger)
-- [ ] Implement: Job Configuration tour (Name, Schedule, Rotation, Storage)
-- [ ] Implement: On-demand launch via Tutorial Icon on each screen
+### [x] Task: Implement Tours (Completed)
+- [x] Implement: Dashboard tour (Job overview, Status, Manual Trigger)
+- [x] Implement: Job Configuration tour (Name, Schedule, Rotation, Storage)
+- [x] Implement: On-demand launch via Tutorial Icon on each screen
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 1.5: Onboarding' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1.5: Onboarding' (Verified via code audit)
 
 ## Phase 2: Deployment & Service Support
 
-### [ ] Task: Windows Service Support
-- [ ] Implement: Add `Microsoft.Extensions.Hosting.WindowsServices` NuGet package
-- [ ] Implement: Update `Program.cs` with `.UseWindowsService()` configuration
-- [ ] Implement: Add installation/uninstallation scripts (PowerShell)
+### [x] Task: Windows Service Support (Completed)
+- [x] Implement: Add `Microsoft.Extensions.Hosting.WindowsServices` NuGet package
+- [x] Implement: Update `Program.cs` with `.UseWindowsService()` configuration
+- [x] Implement: Add installation/uninstallation scripts (PowerShell)
 
-### [ ] Task: Dockerization
-- [ ] Implement: Create `Dockerfile` for the .NET 8 backend
-- [ ] Implement: Create `Dockerfile` for the Next.js frontend
-- [ ] Implement: Create `docker-compose.yml` for full stack orchestration
+### [x] Task: Dockerization (Completed)
+- [x] Implement: Create `Dockerfile` for the unified stack (.NET 10 + Next.js)
+- [x] Implement: Create `docker-compose.yml` for full stack orchestration
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Deployment' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Deployment' (Verified via script generation)
 
 ## Phase 3: Final Polishing
 

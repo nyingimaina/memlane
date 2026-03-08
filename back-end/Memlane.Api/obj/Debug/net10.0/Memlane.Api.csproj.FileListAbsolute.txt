@@ -147,3 +147,6 @@ D:\work\nyingi\code\Memlane\back-end\Memlane.Api\obj\Debug\net10.0\compressed\cn
 D:\work\nyingi\code\Memlane\back-end\Memlane.Api\obj\Debug\net10.0\compressed\yel5lxspnn-{0}-ucmlosekfe-ucmlosekfe.gz
 D:\work\nyingi\code\Memlane\back-end\Memlane.Api\obj\Debug\net10.0\compressed\nfilsxn6tg-{0}-fi3n5f84ov-fi3n5f84ov.gz
 D:\work\nyingi\code\Memlane\back-end\Memlane.Api\obj\Debug\net10.0\compressed\l2yxsl5a65-{0}-eqllhzs8no-eqllhzs8no.gz
+D:\work\nyingi\code\Memlane\back-end\Memlane.Api\bin\Debug\net10.0\Microsoft.Extensions.Hosting.WindowsServices.dll
+D:\work\nyingi\code\Memlane\back-end\Memlane.Api\bin\Debug\net10.0\System.ServiceProcess.ServiceController.dll
+D:\work\nyingi\code\Memlane\back-end\Memlane.Api\bin\Debug\net10.0\runtimes\win\lib\net10.0\System.ServiceProcess.ServiceController.dll
