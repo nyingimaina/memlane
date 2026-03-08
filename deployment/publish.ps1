@@ -19,6 +19,9 @@ New-Item -ItemType Directory -Path $wwwroot
 Copy-Item -Path (Join-Path $frontendDir "out\*") -Destination $wwwroot -Recurse -Force
 # Copy app.ico to the backend root so it's included in the publish
 Copy-Item -Path (Join-Path $PSScriptRoot "app.ico") -Destination $backendDir -Force
+# Copy service scripts to publish root for Inno Setup
+Copy-Item -Path (Join-Path $PSScriptRoot "install-service.ps1") -Destination $backendDir -Force
+Copy-Item -Path (Join-Path $PSScriptRoot "uninstall-service.ps1") -Destination $backendDir -Force
 
 Write-Host ">>> 3. Publishing Backend (.NET 10 Self-Contained)..." -ForegroundColor Cyan
 Set-Location $backendDir
