@@ -3,13 +3,14 @@ import styles from "./DirectoryPicker.module.css";
 
 import React from "react";
 import ZestTextbox from "jattac.libs.web.zest-textbox";
-import { FaFolderOpen } from "react-icons/fa6";
+import { FaFolderOpen, FaFile } from "react-icons/fa6";
 
 interface DirectoryPickerProps {
   value: string;
   onChange: (path: string) => void;
   placeholder?: string;
   label?: string;
+  mode?: "directory" | "file";
 }
 
 const DirectoryPicker: React.FC<DirectoryPickerProps> = ({
@@ -17,27 +18,33 @@ const DirectoryPicker: React.FC<DirectoryPickerProps> = ({
   onChange,
   placeholder,
   label,
+  mode = "directory",
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleBrowse = async () => {
     try {
-      if ("showDirectoryPicker" in window) {
+      if (mode === "directory" && "showDirectoryPicker" in window) {
         const handle = await (window as any).showDirectoryPicker();
         onChange(handle.name);
+      } else if (mode === "file" && "showOpenFilePicker" in window) {
+        const [handle] = await (window as any).showOpenFilePicker();
+        onChange(handle.name);
       } else {
-        // Firefox/Safari Fallback: Use hidden input
+        // Fallback: Use hidden input
         fileInputRef.current?.click();
       }
     } catch (err) {
-      console.error("Directory selection cancelled or failed", err);
+      console.error("Path selection cancelled or failed", err);
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      const path = files[0].webkitRelativePath.split("/")[0];
+      const path = mode === "directory" 
+        ? files[0].webkitRelativePath.split("/")[0] 
+        : files[0].name;
       onChange(path);
     }
   };
@@ -49,9 +56,11 @@ const DirectoryPicker: React.FC<DirectoryPickerProps> = ({
         type="file"
         ref={fileInputRef}
         style={{ display: "none" }}
-        // @ts-ignore
-        webkitdirectory=""
-        directory=""
+        {...(mode === "directory" ? { 
+            // @ts-ignore
+            webkitdirectory: "", 
+            directory: "" 
+        } : {})}
         onChange={handleFileChange}
       />
       <div className={styles.container}>
@@ -67,10 +76,10 @@ const DirectoryPicker: React.FC<DirectoryPickerProps> = ({
         </div>
         <button
           onClick={handleBrowse}
-          title="Browse folders..."
+          title={mode === "directory" ? "Browse folders..." : "Browse files..."}
           className={styles.browseButton}
         >
-          <FaFolderOpen size={18} />
+          {mode === "directory" ? <FaFolderOpen size={18} /> : <FaFile size={16} />}
         </button>
       </div>
     </div>

@@ -124,13 +124,11 @@ const JobForm: React.FC<JobFormProps> = ({
             </div>
 
             <div className="sql-tool-path-field" style={{ gridColumn: 'span 2' }}>
-                <ZestTextbox 
-                    placeholder="Optional: Custom path to mariadb-dump / mysqldump / sqlcmd (e.g. C:\MariaDB\bin)"
+                <DirectoryPicker 
+                    mode="file"
+                    placeholder="Optional: Custom path to mariadb-dump / mysqldump / sqlcmd (e.g. C:\MariaDB\bin\mariadb-dump.exe)"
                     value={state.config.sqlToolPath || ''}
-                    zest={{ 
-                        onTextChanged: (val) => actions.setConfig({ ...state.config, sqlToolPath: val }),
-                        stretch: true
-                    }}
+                    onChange={(val) => actions.setConfig({ ...state.config, sqlToolPath: val })}
                 />
             </div>
         </FormSection>
