@@ -21,6 +21,7 @@ export interface JobMetadata {
 
     // Calculated / Joined fields for Monitoring
     lastRunId?: number;
+    lastRunNumber?: number;
     lastRunStatus?: JobStatus;
     healthScore: number; // 0 to 100
     totalRunsInWindow: number;
@@ -30,6 +31,7 @@ export interface JobMetadata {
 export interface JobRun {
     id: number;
     jobId: number;
+    runNumber: number;
     startTime: string;
     endTime?: string;
     status: JobStatus;
@@ -56,4 +58,5 @@ export interface BackupJobConfiguration {
     retentionCount: number;
     compressionType?: string;
     compressionOptionsJson?: string;
+    sqlToolPath?: string;
 }

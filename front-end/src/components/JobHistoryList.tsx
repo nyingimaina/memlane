@@ -65,7 +65,7 @@ const JobHistoryList: React.FC<JobHistoryListProps> = ({ jobId, onSelectRun }) =
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         {getStatusIcon(run.status)}
                         <div>
-                            <div style={{ fontWeight: 600 }}>Run #{run.id}</div>
+                            <div style={{ fontWeight: 600 }}>Run #{run.runNumber}</div>
                             <div style={{ fontSize: '0.75rem', color: 'var(--secondary)' }}>
                                 {new Date(run.startTime).toLocaleString()}
                             </div>

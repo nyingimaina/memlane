@@ -25,6 +25,7 @@ namespace Memlane.Api.Models
 
         // Calculated / Joined fields for Monitoring
         public int? LastRunId { get; set; }
+        public int? LastRunNumber { get; set; }
         public JobStatus? LastRunStatus { get; set; }
         public int HealthScore { get; set; } // 0 to 100
         public int TotalRunsInWindow { get; set; }
@@ -35,6 +36,7 @@ namespace Memlane.Api.Models
     {
         public int Id { get; set; }
         public int JobId { get; set; }
+        public int RunNumber { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime? EndTime { get; set; }
         public JobStatus Status { get; set; }

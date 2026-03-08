@@ -53,6 +53,7 @@ namespace Memlane.Api.Infrastructure
                 CREATE TABLE IF NOT EXISTS JobRuns (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
                     JobId INTEGER NOT NULL,
+                    RunNumber INTEGER NOT NULL DEFAULT 0,
                     StartTime DATETIME NOT NULL,
                     EndTime DATETIME,
                     Status INTEGER NOT NULL,
@@ -62,6 +63,12 @@ namespace Memlane.Api.Infrastructure
                 )");
 
             var columnNames = await connection.QueryAsync<string>("SELECT name FROM pragma_table_info('Jobs')");
+            var runColumnNames = await connection.QueryAsync<string>("SELECT name FROM pragma_table_info('JobRuns')");
+
+            if (!runColumnNames.Contains("RunNumber"))
+            {
+                await connection.ExecuteAsync("ALTER TABLE JobRuns ADD COLUMN RunNumber INTEGER NOT NULL DEFAULT 0");
+            }
             
             if (!columnNames.Contains("CronExpression"))
             {
@@ -109,6 +116,7 @@ namespace Memlane.Api.Infrastructure
                     SELECT 
                         JobId, 
                         Id as LastRunId, 
+                        RunNumber as LastRunNumber,
                         Status as LastRunStatus,
                         ROW_NUMBER() OVER (PARTITION BY JobId ORDER BY StartTime DESC) as rn
                     FROM JobRuns
@@ -116,6 +124,7 @@ namespace Memlane.Api.Infrastructure
                 SELECT 
                     j.*,
                     lr.LastRunId,
+                    lr.LastRunNumber,
                     lr.LastRunStatus,
                     COALESCE(js.TotalRuns, 0) as TotalRunsInWindow,
                     COALESCE(js.SuccessCount, 0) as SuccessCountInWindow,
@@ -203,8 +212,15 @@ namespace Memlane.Api.Infrastructure
         {
             using var connection = _connectionFactory.CreateConnection();
             return await connection.QuerySingleAsync<int>(@"
-                INSERT INTO JobRuns (JobId, StartTime, Status, Logs, ResultMessage) 
-                VALUES (@JobId, @StartTime, @Status, @Logs, @ResultMessage);
+                INSERT INTO JobRuns (JobId, RunNumber, StartTime, Status, Logs, ResultMessage) 
+                VALUES (
+                    @JobId, 
+                    (SELECT COALESCE(MAX(RunNumber), 0) + 1 FROM JobRuns WHERE JobId = @JobId), 
+                    @StartTime, 
+                    @Status, 
+                    @Logs, 
+                    @ResultMessage
+                );
                 SELECT last_insert_rowid();",
                 run);
         }

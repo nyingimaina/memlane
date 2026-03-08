@@ -107,7 +107,7 @@ namespace Memlane.Api.Services
                     if (provider == null) throw new Exception($"Database provider '{config.DbProvider}' not found.");
 
                     await runLogger.LogAsync($"[Database] Backing up '{config.DbProvider}' source...", 10);
-                    dbBackupFile = await provider.CreateBackupAsync(config.DbConnectionString, artifactWorkspace);
+                    dbBackupFile = await provider.CreateBackupAsync(config.DbConnectionString, artifactWorkspace, job.ConfigurationJson);
                     await runLogger.LogAsync($"[Database] Successfully dumped to: {Path.GetFileName(dbBackupFile)}");
                 }
 
@@ -315,5 +315,8 @@ namespace Memlane.Api.Services
 
         [JsonPropertyName("compressionOptionsJson")]
         public string? CompressionOptionsJson { get; set; }
+
+        [JsonPropertyName("sqlToolPath")]
+        public string? SqlToolPath { get; set; }
     }
 }

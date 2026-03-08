@@ -3,7 +3,7 @@ namespace Memlane.Api.Providers
     public interface IBackupProvider
     {
         string ProviderName { get; }
-        Task<string> CreateBackupAsync(string connectionString, string targetDirectory);
+        Task<string> CreateBackupAsync(string connectionString, string targetDirectory, string? optionsJson = null);
     }
 
     public interface IStorageProvider

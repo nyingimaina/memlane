@@ -66,9 +66,9 @@ const JobsTable: React.FC<JobsTableProps> = ({ jobs, onTrigger, onEdit, onDelete
             cellRenderer: (job) => (
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <span>{job.lastRunAt ? new Date(job.lastRunAt).toLocaleString() : 'Never'}</span>
-                    {job.lastRunId && (
+                    {job.lastRunNumber && (
                         <span style={{ fontSize: '0.7rem', color: 'var(--secondary)', fontWeight: 600 }}>
-                            #{job.lastRunId}
+                            Run #{job.lastRunNumber}
                         </span>
                     )}
                 </div>
