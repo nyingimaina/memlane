@@ -4,7 +4,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: Advanced Operations (Scheduling, Rotation, Deployment)**
+- [x] **Track: Advanced Operations (Scheduling, Rotation, Deployment)**
   *Link: [./tracks/advanced_ops_20260303/](./tracks/advanced_ops_20260303/)*
 
 ---
