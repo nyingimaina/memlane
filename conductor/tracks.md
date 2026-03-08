@@ -12,7 +12,3 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: Advanced Job Monitoring & Health (Jenkins-style Weather, Next Run)**
   *Link: [./tracks/health_monitoring_20260306/](./tracks/health_monitoring_20260306/)*
 
----
-
-- [x] **Track: Advanced Pipeline & 7z Compression (Pick -> Compress -> Move)**
-  *Link: [./tracks/advanced_pipeline_20260305/](./tracks/advanced_pipeline_20260305/)*

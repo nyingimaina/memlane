@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Memlane.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a935d492a9da40bf335c500698b8afe7f5f6d17e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e5574dc013a7b990ebaee00adb00d790699a31ff")]
 [assembly: System.Reflection.AssemblyProductAttribute("Memlane.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Memlane.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
