@@ -2,13 +2,38 @@
 
 Memlane is a simple folder backup and synchronization tool. It helps you keep your important files safe by managing automated backups through an easy-to-use dashboard.
 
+## New in v1.1.0
+- **Zstandard Compression:** High-ratio, pure C# compression for faster and smaller backups.
+- **Improved Reporting:** Independent run numbers and more accurate dashboard metrics.
+- **Enhanced UI:** High-contrast side pane with improved visibility and interactive tutorials.
+- **Database Backups:** Restored support for SQL Server and MariaDB (11.6+).
+
 ## Key Features
 - **Complete Backups:** Automatically detects if any file in your folder has changed. If a change is found, it performs a full backup of the entire folder.
-- **Status at a Glance:** Clear weather-style icons show you exactly how healthy your backup history is.
-- **Automatic Scheduling:** Set your backups to run on a schedule that works for you.
-- **Skip Unnecessary Files:** Define patterns to exclude temporary files or large folders from your backups.
-- **Storage Management:** Automatically removes older backups to save space on your computer.
-- **Easy Windows Setup:** Comes with a standard installer for a quick and simple setup.
+- **Status at a Glance:** Jenkins-style weather icons and descriptive status text show you the health of your backup history.
+- **Automatic Scheduling:** Full Cron support for automated background backups.
+- **Ignore Patterns:** Support for `.memignore` style patterns to exclude temporary files.
+- **Storage Management:** Automated retention policies to prune old backups.
+
+## Deployment & Installation
+
+### Windows Installer
+1. Run `deployment/publish.ps1` to bundle the app.
+2. Compile `deployment/Memlane.iss` with **Inno Setup**.
+3. Run the generated `.exe` to install as a desktop app.
+
+### Windows Service (Background)
+To run Memlane as a persistent background service:
+1. Open PowerShell as **Administrator**.
+2. Run `.\deployment\install-service.ps1`.
+3. The app will now run in the background and start automatically with Windows.
+4. To remove, run `.\deployment\uninstall-service.ps1`.
+
+### Docker
+1. Ensure Docker and Docker Compose are installed.
+2. Run `docker-compose up -d`.
+3. Access the dashboard at `http://localhost:5237`.
+4. Your data and backups will be persisted in the `./data` and `./backups` folders.
 
 ---
 ## License & Terms of Use
