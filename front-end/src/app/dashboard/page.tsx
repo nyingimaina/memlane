@@ -27,8 +27,8 @@ export default function DashboardPage() {
   };
 
   const activeJobs = jobs.filter(j => j.status === JobStatus.InProgress).length;
-  const successCount = jobs.filter(j => j.status === JobStatus.Completed).length;
-  const failCount = jobs.filter(j => j.status === JobStatus.Failed).length;
+  const successCount = jobs.filter(j => (j.lastRunStatus ?? j.status) === JobStatus.Completed).length;
+  const failCount = jobs.filter(j => (j.lastRunStatus ?? j.status) === JobStatus.Failed).length;
 
   const handleEdit = (job: JobMetadata) => {
     openSidePane(

@@ -17,6 +17,7 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
 // Add services to the container.
 builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
+builder.Services.AddControllers();
 
 builder.Services.AddCors(options =>
 {
@@ -75,6 +76,8 @@ app.UseStaticFiles(); // Serve frontend from wwwroot
 app.UseCors();
 
 app.MapHub<JobHub>("/hubs/jobs");
+
+app.MapControllers();
 
 // Job API Endpoints
 app.MapGet("/api/jobs", async (IJobRepository repo) =>

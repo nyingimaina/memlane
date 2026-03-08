@@ -13,8 +13,6 @@ namespace Memlane.Api.Providers
             _logger = logger;
             
             try {
-                // Set library path for SevenZipSharp.Interop
-                // The Interop package places 7z.dll in x64 or x86 subfolders in the base directory
                 var baseDir = AppContext.BaseDirectory;
                 var x64Path = Path.Combine(baseDir, "x64", "7z.dll");
                 var x86Path = Path.Combine(baseDir, "x86", "7z.dll");
@@ -27,15 +25,24 @@ namespace Memlane.Api.Providers
 
                 if (selectedPath != null)
                 {
-                    SevenZipBase.SetLibraryPath(selectedPath);
-                    _logger.LogInformation("7-Zip library loaded from: {Path}", selectedPath);
+                    // Explicitly load the library to verify it's valid
+                    var handle = NativeLibrary.Load(selectedPath);
+                    if (handle != IntPtr.Zero)
+                    {
+                        SevenZipBase.SetLibraryPath(selectedPath);
+                        _logger.LogInformation("7-Zip library successfully loaded from: {Path}", selectedPath);
+                    }
+                    else
+                    {
+                        _logger.LogError("NativeLibrary.Load failed for: {Path}", selectedPath);
+                    }
                 }
                 else
                 {
-                    _logger.LogWarning("7z.dll not found in standard locations (x64, x86, or root). 7-Zip compression will likely fail. BaseDir: {BaseDir}", baseDir);
+                    _logger.LogWarning("7z.dll not found in standard locations. BaseDir: {BaseDir}", baseDir);
                 }
             } catch (Exception ex) {
-                _logger.LogError(ex, "Error initializing 7-Zip library path.");
+                _logger.LogError(ex, "Error initializing 7-Zip library path. If running in IIS/Express, ensure DLLs are in the bin folder.");
             }
         }
 

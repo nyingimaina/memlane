@@ -35,7 +35,7 @@ const JobsTable: React.FC<JobsTableProps> = ({ jobs, onTrigger, onEdit, onDelete
         {
             columnId: 'health',
             displayLabel: 'Health',
-            cellRenderer: (job) => <JobHealthIcon score={job.healthScore} total={job.totalRunsInWindow} success={job.successCountInWindow} />,
+            cellRenderer: (job) => <JobHealthIcon score={job.healthScore} total={job.totalRunsInWindow} success={job.successCountInWindow} lastRunStatus={job.lastRunStatus} />,
             getSortableValue: (job) => job.healthScore
         },
         {
