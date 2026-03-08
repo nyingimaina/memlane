@@ -63,6 +63,12 @@ namespace Memlane.Api.Providers
 
         public string ProviderName => "MariaDB";
 
+        private class BackupJobConfiguration
+        {
+            [System.Text.Json.Serialization.JsonPropertyName("sqlToolPath")]
+            public string? SqlToolPath { get; set; }
+        }
+
         public async Task<string> CreateBackupAsync(string connectionString, string targetDirectory, string? optionsJson = null)
         {
             var databaseName = GetDatabaseName(connectionString);
