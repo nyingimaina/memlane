@@ -21,20 +21,11 @@ namespace Memlane.Api.Controllers
                 Is64BitProcess = Environment.Is64BitProcess,
                 Paths = new
                 {
-                    x64 = new { Path = x64Path, Exists = File.Exists(x64Path) },
-                    x86 = new { Path = x86Path, Exists = File.Exists(x86Path) },
-                    root = new { Path = rootPath, Exists = File.Exists(rootPath) }
-                },
-                CurrentLibraryPath = GetCurrentLibraryPath()
+                    x64 = new { Path = x64Path, Exists = System.IO.File.Exists(x64Path) },
+                    x86 = new { Path = x86Path, Exists = System.IO.File.Exists(x86Path) },
+                    root = new { Path = rootPath, Exists = System.IO.File.Exists(rootPath) }
+                }
             });
-        }
-
-        private string? GetCurrentLibraryPath()
-        {
-            try {
-                // Accessing private field via reflection if needed, but for now just returning try/catch
-                return "Unknown (SevenZipBase doesn't expose current path easily)";
-            } catch { return "Error"; }
         }
     }
 }
